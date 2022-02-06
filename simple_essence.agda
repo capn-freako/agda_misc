@@ -107,14 +107,16 @@ instance
           }
     }
   
--- ------------------------------
--- -- Continuation of Linear Maps
--- ------------------------------
--- -- record LinCont {A B : Set} (f : B → ℜ) : Set where
--- --   field
--- --     priv : A → B
--- --   cont : {{_ : Linear f}} → A → ℜ
--- --   cont = f ∘ priv
+------------------------------
+-- Continuation of Linear Maps
+------------------------------
+record LinCont {A B : Set} (f : B → ℜ)
+               ⦃ _ : Additive B ⦄ ⦃ _ : Scalable B ⦄ ⦃ _ : Linear f ⦄
+               : Set where
+  field
+    priv : A → B
+  cont : A → ℜ
+  cont = f ∘ priv
 
 -- ---------------
 -- -- Isomorphisms
