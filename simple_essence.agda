@@ -28,11 +28,8 @@ postulate
 -- Because `_≃_` won't accept ℜ; it requires something with type: Set.
 -- So, we wrap up a ℜ inside a § constructor, to fulfill that need.
 ----------------------------------------------------------------------
-record Scalar : Set where
-  constructor § 
-  field
-    val : ℜ
-open Scalar ⦃ ... ⦄
+data Scalar : Set where
+  § : ℜ → Scalar
 
 add§ : Scalar → Scalar → Scalar
 add§ (§ x) (§ y) = § (x + y)
@@ -155,10 +152,10 @@ record ScalarMap : Set where
 -- (Note that such a mapping must pass through the origin.)
 s⊸s≃s : ScalarMap ≃ Scalar
 s⊸s≃s =
-  record { to = § ∘ ScalarMap.m
-         ; from = λ (§ m) → record { m = m }
-         ; from∘to = λ {x → refl}
-         ; to∘from = λ {y → refl}
+  record { to      = § ∘ ScalarMap.m
+         ; from    = λ { (§ m) → record { m = m } }
+         ; from∘to = λ { x     → refl }
+         ; to∘from = λ { (§ m) → refl }
          }
 
 -- Linear mapping of composite types to scalars: a ⊸ s ≃ a
