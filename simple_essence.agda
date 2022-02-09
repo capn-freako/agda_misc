@@ -65,11 +65,11 @@ instance
   ScalarAdditive = record { _⊕_ = add§ }
 
   -- ToDo: Review paper, to determine proper spec. for this implementation.
-  CompositeAdditive : Additive Composite
-  CompositeAdditive =
-    record { (σ (§ x)) ⊕ (σ (§ y)) = σ (§ (x + y))
-             (σ (§ x)) ⊕ (u Χ v)   = σ (§ (x + y))
-           }
+  -- CompositeAdditive : Additive Composite
+  -- CompositeAdditive =
+  --   record { (σ (§ x)) ⊕ (σ (§ y)) = σ (§ (x + y))
+  --            (σ (§ x)) ⊕ (u Χ v)   = σ (§ (x + y))
+  --          }
   
 -----------------
 -- Scalable Types
