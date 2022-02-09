@@ -13,14 +13,16 @@ open Eq.≡-Reasoning using (begin_; _≡⟨⟩_; step-≡; _∎)
 
 open import plfa_local.part1.Isomorphism
 
-ℜ     = Float
+ℜ = Float
 
 -- These aren't strictly true for machine types approximating real
 -- (i.e. - `Float`, etc.), but that's okay for our "demo" purposes here.
 postulate
-  distrib : {m a b : ℜ} → m * (a + b) ≡ (m * a) + (m * b)
-  assoc   : {a b c : ℜ} → a * (b * c) ≡ (a * b) * c
-  commut  : {a b   : ℜ} → a * b       ≡ b * a
+  distrib  : {m a b : ℜ} → m * (a + b) ≡ (m * a) + (m * b)
+  assoc-*  : {a b c : ℜ} → a * (b * c) ≡ (a * b) * c
+  commut-* : {a b   : ℜ} → a * b       ≡ b * a
+  assoc-+  : {a b c : ℜ} → a + (b + c) ≡ (a + b) + c
+  commut-+ : {a b   : ℜ} → a + b       ≡ b + a
 
 ----------------------------------------------------------------------
 -- Scalar Values
@@ -37,6 +39,18 @@ add§ (§ x) (§ y) = § (x + y)
 mul§ : ℜ → Scalar → Scalar
 mul§ x (§ y) = § (x * y)
 
+--------
+-- Pairs
+--------
+data Pair (A B : Set) : Set where
+  _,_ : (x : A) → (y : B) → Pair A B
+
+_Χ_ : {A B C D : Set} → (A → C) → (B → D) → Pair A B → Pair C D
+f Χ g = λ {(x , y) → ((f x) , (g y))}
+
+_Χ₂_ : {A B C D E F : Set} → (A → C → E) → (B → D → F) → Pair A B → Pair C D → Pair E F
+f Χ₂ g = λ {(x , y) (w , z) → ((f x w) , (g y z))}
+
 ------------------------------------------------------------------------
 -- Composite Values (i.e. - some assemblage of scalars)
 --
@@ -44,15 +58,15 @@ mul§ x (§ y) = § (x * y)
 -- the assemblage, preferring to capture whatever truisms are available
 -- to us in their most general/abstract form.
 ------------------------------------------------------------------------
-data Composite : Set where
-  σ   : Scalar    → Composite
-  _Χ_ : Composite → Composite → Composite
+data Term : Set₁ where
+  σ   : Scalar → Term
+  _π_ : ∀ {A B : Set} → Pair A B → Term
   
 -----------------
 -- Additive Types
 -----------------
 record Additive (A : Set) : Set where
-  infixl 6 _⊕_  -- Just matching associativity/priority of `_+_`.
+  infixl 6 _⊕_  -- Just matching assoc-*iativity/priority of `_+_`.
   field
     _⊕_ : A → A → A
 open Additive ⦃ ... ⦄
@@ -65,11 +79,8 @@ instance
   ScalarAdditive = record { _⊕_ = add§ }
 
   -- ToDo: Review paper, to determine proper spec. for this implementation.
-  CompositeAdditive : Additive Composite
-  CompositeAdditive =
-    record { (σ (§ x)) ⊕ (σ (§ y)) = σ (§ (x + y))
-             (σ (§ x)) ⊕ (u Χ v)   = σ (§ (x + y))
-           }
+  PairAdditive : {A B : Set} {{_ : Additive A}} {{_ : Additive B}} → Additive (Pair A B)
+  PairAdditive = record { _⊕_ = (_⊕_ Χ₂ _⊕_) }
   
 -----------------
 -- Scalable Types
@@ -86,6 +97,10 @@ instance
 
   ScalarScalable : Scalable Scalar
   ScalarScalable = record { _⊛_ = mul§ }
+  
+  -- ToDo: Review paper, to determine proper spec. for this implementation.
+  PairScalable : {A B : Set} {{_ : Scalable A}} {{_ : Scalable B}} → Scalable (Pair A B)
+  PairScalable = record { _⊛_ = λ m → (m ⊛_) Χ (m ⊛_) }
   
 --------------
 -- Linear Maps
@@ -114,11 +129,11 @@ scalar-map m = record
   ; scales =
       λ { s a → begin
                   m * (s * a)
-                ≡⟨ assoc {m} ⟩
+                ≡⟨ assoc-* {m} ⟩
                   (m * s) * a
-                ≡⟨ cong (_* a) (commut {m} {s}) ⟩
+                ≡⟨ cong (_* a) (commut-* {m} {s}) ⟩
                   (s * m) * a
-                ≡⟨ sym (assoc {s}) ⟩
+                ≡⟨ sym (assoc-* {s}) ⟩
                   s * (m * a)
                 ∎
         }
@@ -130,7 +145,61 @@ record ScalarMap : Set where
     m : ℜ
   map : LinMap {ℜ} {ℜ}
   map = scalar-map m
-  
+
+-- pair-map : {A B : Set}
+--            {{_ : Additive A}} {{_ : Additive B}}
+--            {{_ : Scalable A}} {{_ : Scalable B}}
+pair-map : Pair ℜ ℜ → LinMap {Pair ℜ ℜ} {ℜ}
+pair-map (m₁ , m₂) = record
+  { f = λ { (x , y) → (m₁ * x) + (m₂ * y) }
+  ; adds = λ { (x , y) (x₁ , y₁) →
+                 begin
+                   (m₁ * (x + x₁)) + (m₂ * (y + y₁))
+                 ≡⟨ cong (_+ (m₂ * (y + y₁))) (distrib {m₁} {x} {x₁}) ⟩
+                   ((m₁ * x) + (m₁ * x₁)) + (m₂ * (y + y₁))
+                 ≡⟨ cong (((m₁ * x) + (m₁ * x₁)) +_) (distrib {m₂} {y} {y₁}) ⟩
+                   ((m₁ * x) + (m₁ * x₁)) + ((m₂ * y) + (m₂ * y₁))
+                 ≡⟨ assoc-+ {(m₁ * x) + (m₁ * x₁)} {(m₂ * y)} {(m₂ * y₁)} ⟩
+                   (((m₁ * x) + (m₁ * x₁)) + (m₂ * y)) + (m₂ * y₁)
+                 ≡⟨ cong (_+ (m₂ * y₁)) (sym (assoc-+ {(m₁ * x)} {(m₁ * x₁)} {(m₂ * y)})) ⟩
+                   ((m₁ * x) + ((m₁ * x₁) + (m₂ * y))) + (m₂ * y₁)
+                 ≡⟨ sym (assoc-+ {m₁ * x} {(m₁ * x₁) + (m₂ * y)} {m₂ * y₁}) ⟩
+                   (m₁ * x) + (((m₁ * x₁) + (m₂ * y)) + (m₂ * y₁))
+                 ≡⟨ cong ((m₁ * x) +_) (cong (_+ (m₂ * y₁)) (commut-+ {m₁ * x₁} {m₂ * y})) ⟩
+                   (m₁ * x) + (((m₂ * y) + (m₁ * x₁)) + (m₂ * y₁))
+                 ≡⟨ cong ((m₁ * x) +_) (sym (assoc-+ {m₂ * y} {m₁ * x₁} {m₂ * y₁})) ⟩
+                   (m₁ * x) + ((m₂ * y) + ((m₁ * x₁) + (m₂ * y₁)))
+                 ≡⟨ assoc-+ {m₁ * x} {m₂ * y} {(m₁ * x₁) + (m₂ * y₁)} ⟩
+                   ((m₁ * x) + (m₂ * y)) + ((m₁ * x₁) + (m₂ * y₁))
+                 ∎
+             }
+  ; scales = λ { s (x , y) →
+                   begin
+                     (m₁ * (s * x)) + (m₂ * (s * y))
+                   ≡⟨ cong (_+ (m₂ * (s * y))) (assoc-* {m₁} {s} {x}) ⟩
+                     ((m₁ * s) * x) + (m₂ * (s * y))
+                   ≡⟨ cong (_+ (m₂ * (s * y))) (cong (_* x) (commut-* {m₁} {s})) ⟩
+                     ((s * m₁) * x) + (m₂ * (s * y))
+                   ≡⟨ cong (_+ (m₂ * (s * y))) (sym (assoc-* {s} {m₁} {x})) ⟩
+                     (s * (m₁ * x)) + (m₂ * (s * y))
+                   ≡⟨ cong ((s * (m₁ * x)) +_) (assoc-* {m₂} {s} {y}) ⟩
+                     (s * (m₁ * x)) + ((m₂ * s) * y)
+                   ≡⟨ cong ((s * (m₁ * x)) +_) (cong (_* y) (commut-* {m₂} {s})) ⟩
+                     (s * (m₁ * x)) + ((s * m₂) * y)
+                   ≡⟨ cong ((s * (m₁ * x)) +_) (sym (assoc-* {s} {m₂} {y})) ⟩
+                     (s * (m₁ * x)) + (s * (m₂ * y))
+                   ≡⟨ sym (distrib {s} {m₁ * x} {m₂ * y}) ⟩
+                     s * ((m₁ * x) + (m₂ * y))
+                   ∎
+               }
+  }
+
+record PairMap : Set where
+  field
+    ms : Pair ℜ ℜ
+  map : LinMap {Pair ℜ ℜ} {ℜ}
+  map = pair-map ms
+
 ------------------------------
 -- Continuation of Linear Maps
 ------------------------------
@@ -167,6 +236,7 @@ s⊸s≃s =
          ; from∘to = λ { x     → refl }
          ; to∘from = λ { (§ m) → refl }
          }
+
 
 -- Linear mapping of composite types to scalars: a ⊸ s ≃ a
 --
