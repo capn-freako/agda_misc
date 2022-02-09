@@ -44,7 +44,10 @@ mul§ x (§ y) = § (x * y)
 -- the assemblage, preferring to capture whatever truisms are available
 -- to us in their most general/abstract form.
 ------------------------------------------------------------------------
-
+data Composite : Set where
+  σ   : Scalar    → Composite
+  _Χ_ : Composite → Composite → Composite
+  
 -----------------
 -- Additive Types
 -----------------
@@ -60,6 +63,13 @@ instance
 
   ScalarAdditive : Additive Scalar
   ScalarAdditive = record { _⊕_ = add§ }
+
+  -- ToDo: Review paper, to determine proper spec. for this implementation.
+  CompositeAdditive : Additive Composite
+  CompositeAdditive =
+    record { (σ (§ x)) ⊕ (σ (§ y)) = σ (§ (x + y))
+             (σ (§ x)) ⊕ (u Χ v)   = σ (§ (x + y))
+           }
   
 -----------------
 -- Scalable Types
