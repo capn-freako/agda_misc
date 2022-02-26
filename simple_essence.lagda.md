@@ -1,6 +1,7 @@
 ---
-title: Agda Doodlings by Dave
-...
+format: markdown
+title: Agda Doodlings, re: Conal's "Simple Essence of Automatic Differentiation"
+---
 
 # Agda Doodlings, re: Conal's "Simple Essence of Automatic Differentiation"
 
@@ -9,6 +10,31 @@ on: February 19, 2022
 
 In this [literate Agda](https://agda.readthedocs.io/en/v2.6.2.1/tools/literate-programming.html#literate-markdown) file I'm exploring some of the ideas written about by Conal Elliott in his paper: _The Simple Essence of Automatic Differentiation_.
 In particular, I'm attempting to prove, using Agda, some of the isomorphisms that Conal reveals in that paper.
+
+## Introduction
+
+In (re)reading Conal's paper, I noticed something that I thought was a typo:
+
+> The internal representation of $Cont^{s}_{(⊸)} \, a \, b$ is $(b ⊸ s) → (a ⊸ s)$, which is isomorphic to $b → a$.
+
+I thought for sure Conal meant to say:
+
+> ... isomorphic to $a → b$.
+
+since the continuation must "know" how to get from `a` to `b`, in order to offer the type signature it does.
+(Can this be proven in Agda, perhaps by using a proof-by-contradiction approach?)
+
+But, when I discussed this with Conal, he drew my attention to the paragraph immediately above, in which he points out:
+
+> In particular, every linear map in $A ⊸ s$ has the form `dot u` for some `u :: A`,
+
+And that, therefore, since $a ⊸ s$ is isomorphic to $a$,  $(b ⊸ s) → (a ⊸ s)$ is indeed isomorphic to $b → a$.
+
+Well, that's very interesting, because now we've got something (the _continuation_) that is isomorphic to both $a → b$ and $b → a$.
+And, because the isomorphism relation is _transitive_, that means: $a → b ≅ b → a$!
+Of course, this only holds in the special case where both types $a$ and $b$ have linear maps to the underlying scalar field.
+And the existence of this duality under this very special condition is sort of the punchline of Conal's paper.
+Nevertheless, it struck me as quite powerful to be able to prove, at the outset and using Agda, that the duality must exist.
 
 ## Preliminaries
 
@@ -28,6 +54,32 @@ open Eq.≡-Reasoning using (begin_; _≡⟨⟩_; step-≡; _∎)
 open import plfa_local.part1.Isomorphism  -- ToDo: Replace w/ equivalent from standard library.
 
 ```
+
+Next we need to codify in Agda what we mean by a _linear map_.
+We'll take Conal's definition: a linear map is...
+
+> a function that distributes over tensor addition and scalar multiplication.
+
+That is:
+
+$$
+f : A \to B
+$$
+
+and:
+
+$$
+\begin{eqnarray}
+x = y
+\end{eqnarray}
+$$
+
+$$
+\begin{eqnarray}
+f (x \oplus y)  &=& f x \oplus f y \\
+f (s \otimes x) &=& s \otimes f x
+\end{eqnarray}
+$$
 
 ## Types
 
