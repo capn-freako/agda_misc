@@ -38,24 +38,7 @@ Nevertheless, it struck me as quite powerful to be able to prove, at the outset 
 
 ## Preliminaries
 
-Here I define my Agda module and import what it needs from the standard library.
-
-```agda
-module simple_essence where
-
-open import Agda.Primitive
-open import Data.Bool
-open import Data.Float
-
-import Relation.Binary.PropositionalEquality as Eq
-open Eq using (_≡_; refl; trans; sym; cong; cong₂; cong-app; subst)
-open Eq.≡-Reasoning using (begin_; _≡⟨⟩_; step-≡; _∎)
-
-open import plfa_local.part1.Isomorphism  -- ToDo: Replace w/ equivalent from standard library.
-
-```
-
-Next we need to codify in Agda what we mean by a _linear map_.
+First, we need to codify in Agda what we mean by a _linear map_.
 We'll take Conal's definition: a linear map is...
 
 > a function that distributes over tensor addition and scalar multiplication.
@@ -69,17 +52,229 @@ $$
 and:
 
 $$
-\begin{eqnarray}
-x = y
-\end{eqnarray}
+f (x \oplus y)  = f x \oplus f y
 $$
 
 $$
-\begin{eqnarray}
-f (x \oplus y)  &=& f x \oplus f y \\
-f (s \otimes x) &=& s \otimes f x
-\end{eqnarray}
+f (s \otimes x) = s \otimes f x
 $$
+
+Right away, we've identified several necessities, in addition to those explicitly written above:
+
+1. The $\oplus$ operator must take two arguments of the same type and combine them, returning a result also within the type.
+
+1. Both types $A$ and $B$ _must_ have the $\oplus$ operator defined on them.
+
+1. The $\otimes$ operator must take a scalar as its first argument and some type as its second, returning a result value within that type.
+
+1. Both types $A$ and $B$ _must_ have the $\otimes$ operator defined on them.
+
+We can codify all this in Agda fairly easily:
+
+    data § : Set where
+      § : §
+
+    record Additive (A : Set) : Set where
+      infixl 6 _⊕_  -- Just matching associativity/priority of `_+_`.
+      field
+        _⊕_ : A → A → A
+
+    record Scalable (A : Set) : Set where
+      infixl 7 _⊛_  -- Just matching associativity/priority of `_*_`.
+      field
+        _⊛_ : § → A → A
+
+    record LinMap {A B : Set}
+                  {{_ : Additive A}} {{_ : Additive B}}
+                  {{_ : Scalable A}} {{_ : Scalable B}}
+                  : Set where
+      field
+        f      : A → B
+        
+        adds   : ∀ (a b : A)
+                 ----------------------
+               → f (a ⊕ b) ≡ f a ⊕ f b
+
+        scales : ∀ (s : §) (a : A)
+                 --------------------
+               → f (s ⊛ a) ≡ s ⊛ f a
+
+## Additional Requirements
+
+Okay, let's see if what we've got so far is enough to attack the first isomorphism I'd like to prove: `A ⊸ § ≅ A`, i.e., a linear map from type `A` to scalar is isomorphic to the type `A` itself.
+Proving this isomorphism in Agda amounts to constructing the following record:
+
+    a⊸§≃a : ∀ {A : Set} {{_ : Additive A}} {{_ : Scalable A}}
+            -------------------------------------------------
+          → LinMap {A} {§} ≃ A
+    a⊸§≃a = record
+      { to   = λ { lm → ? }
+      ; from = λ { a  → ? }
+      ; from∘to = ?
+      ; to∘from = ?
+      }
+
+Now, how to implement `to` and `from`?
+
+If we required that `Additive` provide a _left identity_ for `⊕` then it would be enough to require that `A` be able to produce an iterable set of basis vectors.
+In that case, `to` could be implemented, via the following:
+
+    to = λ lm → foldl (λ acc v → acc ⊕ (lm.f v) ⊛ v) id-⊕ vs
+
+Implementing `from` is fairly simple, but does require that `A` have an inner product.
+In that case, we just build a `LinMap` record where `f` takes the dot product of its
+input w/ `a`.
+
+## First Proof Attempt
+
+Let's try adding the extra necessities identified above and attacking the proof.
+I'll note any additional properties, record fields, etc. needed to complete the proof, via Agda comments, for subsequent discussion.
+
+```agda
+module simple_essence where
+
+open import Data.Float
+open import Data.List
+import Relation.Binary.PropositionalEquality as Eq
+open Eq using (_≡_; refl; trans; sym; cong; cong₂; cong-app; subst)
+open Eq.≡-Reasoning using (begin_; _≡⟨⟩_; step-≡; _∎)
+-- ToDo: Replace w/ equivalent from standard library:
+open import plfa_local.part1.Isomorphism
+
+postulate
+  -- This one seems completely safe. Why isn't it in the standard library?
+  id+ : {x : Float} → 0.0 + x ≡ x
+
+data § : Set where
+  S : Float → §
+
+record Additive (A : Set) : Set where
+  infixl 6 _⊕_  -- Just matching associativity/priority of `_+_`.
+  field
+    id⊕  : A
+    _⊕_  : A → A → A
+    id-⊕ : (a : A)
+           ----------
+         → id⊕ ⊕ a ≡ a
+    -- assoc-⊕ : (x y z : A) → (x ⊕ y) ⊕ z ≡ x ⊕ (y ⊕ z)
+open Additive {{ ... }}
+instance
+  AdditiveScalar : Additive §
+  AdditiveScalar = record
+    { id⊕  = S 0.0
+    ; _⊕_  = λ {(S x) (S y) → S (x + y)}
+    ; id-⊕ = λ { (S x) → begin
+                           S (0.0 + x)
+                         ≡⟨ cong S id+ ⟩
+                           S x
+                         ∎
+               }
+    }
+
+record Scalable (A : Set) : Set where
+  infixl 7 _⊛_  -- Just matching associativity/priority of `_*_`.
+  field
+    _⊛_ : § → A → A
+open Scalable {{ ... }}
+instance
+  ScalableScalar : Scalable §
+  ScalableScalar = record
+    { _⊛_ = λ {(S x) (S y) → S (x * y)}
+    }
+
+record LinMap (A B : Set)
+              {{_ : Additive A}} {{_ : Additive B}}
+              {{_ : Scalable A}} {{_ : Scalable B}}
+              : Set where
+  field
+    f      : A → B
+    
+    adds   : ∀ (a b : A)
+             ----------------------
+           → f (a ⊕ b) ≡ f a ⊕ f b
+
+    scales : ∀ (s : §) (a : A)
+             --------------------
+           → f (s ⊛ a) ≡ s ⊛ f a
+open LinMap {{ ... }}
+
+record VectorSpace (A : Set)
+                   {{_ : Additive A}} {{_ : Scalable A}}
+                   : Set where
+  field
+    -- Seems like I should have to define some properties around this:
+    basisSet    : List A
+    _·_         : A → A → §
+    -- Added while solving the isomorphism below.
+    ·-distrib-⊕ : ∀ {a b c : A}
+                  -------------------------------
+                → a · (b ⊕ c) ≡ (a · b) ⊕ (a · c)
+    ·-comm-⊛    : ∀ {s : §} {a b : A}
+                  -------------------------
+                → a · (s ⊛ b) ≡ s ⊛ (a · b)
+open VectorSpace {{ ... }}
+
+a⊸§≃a : ∀ {A : Set}
+        {{_ : Additive A}} {{_ : Scalable A}}
+        {{_ : VectorSpace A}}
+        -------------------------------------
+      → LinMap A § ≃ A
+a⊸§≃a = record
+  { to   = λ { lm → foldl (λ acc v → acc ⊕ (LinMap.f lm v) ⊛ v) id⊕ basisSet }
+  ; from = λ { a  → record
+                      { f      = λ {x → a · x}
+                      ; adds   = λ { v₁ v₂ →
+                                       begin
+                                          a · (v₁ ⊕ v₂)
+                                        ≡⟨ ·-distrib-⊕ ⟩
+                                          (a · v₁) ⊕ (a · v₂)
+                                        ∎
+                                   }
+                      ; scales = λ { s b →
+                                       begin
+                                          a · (s ⊛ b)
+                                        ≡⟨ ·-comm-⊛ ⟩
+                                          s ⊛ (a · b)
+                                        ∎
+                                   }
+                      }
+             }
+  ; from∘to =
+      λ {lm → let a = foldl (λ acc v → acc ⊕ (LinMap.f lm v) ⊛ v) id⊕ basisSet
+              in  begin
+                    record { f      = λ {x → a · x}
+                           ; adds   = {! λ {a₁ a₂ → begin
+                                                    a · (a₁ ⊕ a₂)
+                                                  ≡⟨ ·-distrib-⊕ ⟩  -- {a} {a₁} {a₂} ⟩
+                                                    (a · a₁) ⊕ (a · a₂)
+                                                  ∎} !}
+                           ; scales = {!!}
+                           }
+                  ≡⟨ {!!} ⟩
+                    {!!}
+                  ≡⟨ {!!} ⟩
+                    {!!}
+                  ≡⟨ {!!} ⟩
+                    {!!}
+                  ≡⟨ {!!} ⟩
+                    lm
+                  ∎ }
+  ; to∘from = {!!}
+  }
+
+```
+
+## Agda Imports
+
+Here I define my Agda module and import what it needs from the standard library.
+
+```agda
+-- module simple_essence where
+
+-- open import Agda.Primitive
+-- open import Data.Bool
+
+```
 
 ## Types
 
@@ -92,16 +287,16 @@ Here I define `Float` as my proxy for real numbers and provide some basic postul
 **ToDo**: Eliminate this, as per Conal's advice, and predicate everything on `Semiring`, instead.
 
 ```agda
-ℜ = Float
+-- ℜ = Float
 
--- These aren't strictly true for machine types approximating real
--- (i.e. - `Float`, etc.), but that's okay for our "demo" purposes here.
-postulate
-  distrib  : {m a b : ℜ} → m * (a + b) ≡ (m * a) + (m * b)
-  assoc-*  : {a b c : ℜ} → (a * b) * c ≡ a * (b * c)
-  commut-* : {a b   : ℜ} → a * b       ≡ b * a
-  assoc-+  : {a b c : ℜ} → (a + b) + c ≡ a + (b + c)
-  commut-+ : {a b   : ℜ} → a + b       ≡ b + a
+-- -- These aren't strictly true for machine types approximating real
+-- -- (i.e. - `Float`, etc.), but that's okay for our "demo" purposes here.
+-- postulate
+--   distrib  : {m a b : ℜ} → m * (a + b) ≡ (m * a) + (m * b)
+--   assoc-*  : {a b c : ℜ} → (a * b) * c ≡ a * (b * c)
+--   commut-* : {a b   : ℜ} → a * b       ≡ b * a
+--   assoc-+  : {a b c : ℜ} → (a + b) + c ≡ a + (b + c)
+--   commut-+ : {a b   : ℜ} → a + b       ≡ b + a
 
 ```
 
@@ -134,8 +329,6 @@ The *isomorphism* operator: `_≃_`, won't accept ℜ; it requires something wit
 So, we wrap up a ℜ inside a § constructor, to fulfill that need.
 
 ```agda
-data Scalar : Set where
-  § : ℜ → Scalar
 
 ```
 
@@ -144,46 +337,46 @@ data Scalar : Set where
 Scalar addition is defined by requiring that a sum of scalars is a scalar of the sum.
 
 ```agda
-infixl 6 _+§_  -- Just using the associativity/priority of ordinary addition.
-_+§_ : Scalar → Scalar → Scalar
-(§ x) +§ (§ y) = § (x + y)
+-- infixl 6 _+§_  -- Just using the associativity/priority of ordinary addition.
+-- _+§_ : Scalar → Scalar → Scalar
+-- (§ x) +§ (§ y) = § (x + y)
 
 ```
 
 We can show that it is both *associative* and *commutative*, thanks to the associativity and commutativity of the underlying real field upon which it depends.
 
 ```agda
-assoc-+§ : (x y z : Scalar)
-           -----------------------------
-         → (x +§ y) +§ z ≡ x +§ (y +§ z)
-assoc-+§ (§ x) (§ y) (§ z) =
-  begin
-    ((§ x) +§ (§ y)) +§ (§ z)
-  ≡⟨⟩
-    (§ (x + y)) +§ (§ z)
-  ≡⟨⟩
-    § ((x + y) + z)
-  ≡⟨ cong § (assoc-+ {x}) ⟩
-    § (x + (y + z))
-  ≡⟨⟩
-    (§ x) +§ (§ (y + z))
-  ≡⟨⟩
-    (§ x) +§ ((§ y) +§ (§ z))
-  ∎
+-- assoc-+§ : (x y z : Scalar)
+--            -----------------------------
+--          → (x +§ y) +§ z ≡ x +§ (y +§ z)
+-- assoc-+§ (§ x) (§ y) (§ z) =
+--   begin
+--     ((§ x) +§ (§ y)) +§ (§ z)
+--   ≡⟨⟩
+--     (§ (x + y)) +§ (§ z)
+--   ≡⟨⟩
+--     § ((x + y) + z)
+--   ≡⟨ cong § (assoc-+ {x}) ⟩
+--     § (x + (y + z))
+--   ≡⟨⟩
+--     (§ x) +§ (§ (y + z))
+--   ≡⟨⟩
+--     (§ x) +§ ((§ y) +§ (§ z))
+--   ∎
 
-commut-+§ : (x y : Scalar)
-            ---------------
-          → x +§ y ≡ y +§ x
-commut-+§ (§ x) (§ y) =
-  begin
-    (§ x) +§ (§ y)
-  ≡⟨⟩
-    § (x + y)
-  ≡⟨ cong § (commut-+ {x}) ⟩
-    § (y + x)
-  ≡⟨⟩
-    (§ y) +§ (§ x)
-  ∎
+-- commut-+§ : (x y : Scalar)
+--             ---------------
+--           → x +§ y ≡ y +§ x
+-- commut-+§ (§ x) (§ y) =
+--   begin
+--     (§ x) +§ (§ y)
+--   ≡⟨⟩
+--     § (x + y)
+--   ≡⟨ cong § (commut-+ {x}) ⟩
+--     § (y + x)
+--   ≡⟨⟩
+--     (§ y) +§ (§ x)
+--   ∎
 
 ```
 
@@ -193,27 +386,27 @@ Again, we simply require the operator to be an endofunctor.
 And we can show distributivity.
 
 ```agda
-infixl 7 _*§_
-_*§_ : ℜ → Scalar → Scalar
-x *§ (§ y) = § (x * y)
+-- infixl 7 _*§_
+-- _*§_ : ℜ → Scalar → Scalar
+-- x *§ (§ y) = § (x * y)
 
-distrib-*§ : (s : ℜ) → (x y : Scalar)
-             --------------------------------
-           → s *§ (x +§ y) ≡ s *§ x +§ s *§ y
-distrib-*§ s (§ x) (§ y) =
-  begin
-    s *§ (§ x +§ § y)
-  ≡⟨⟩
-    s *§ § (x + y)
-  ≡⟨⟩
-    § (s * (x + y))
-  ≡⟨ cong § (distrib {s}) ⟩
-    § ((s * x) + (s * y))
-  ≡⟨⟩
-    § (s * x) +§ § (s * y)
-  ≡⟨⟩
-    s *§ (§ x) +§ s *§ (§ y)
-  ∎
+-- distrib-*§ : (s : ℜ) → (x y : Scalar)
+--              --------------------------------
+--            → s *§ (x +§ y) ≡ s *§ x +§ s *§ y
+-- distrib-*§ s (§ x) (§ y) =
+--   begin
+--     s *§ (§ x +§ § y)
+--   ≡⟨⟩
+--     s *§ § (x + y)
+--   ≡⟨⟩
+--     § (s * (x + y))
+--   ≡⟨ cong § (distrib {s}) ⟩
+--     § ((s * x) + (s * y))
+--   ≡⟨⟩
+--     § (s * x) +§ § (s * y)
+--   ≡⟨⟩
+--     s *§ (§ x) +§ s *§ (§ y)
+--   ∎
 
 ```
 
@@ -223,15 +416,15 @@ I use *nonuniform* pairs, to allow for maximum flexibility in assembling composi
 I also provide the "cross" operator from Conal's paper, in both unary and binary form.
 
 ```agda
-infixl 5 _,_
-data Pair (A B : Set) : Set where
-  _,_ : (x : A) → (y : B) → Pair A B
+-- infixl 5 _,_
+-- data Pair (A B : Set) : Set where
+--   _,_ : (x : A) → (y : B) → Pair A B
 
-_Χ_ : {A B C D : Set} → (A → C) → (B → D) → Pair A B → Pair C D
-f Χ g = λ {(x , y) → ((f x) , (g y))}
+-- _Χ_ : {A B C D : Set} → (A → C) → (B → D) → Pair A B → Pair C D
+-- f Χ g = λ {(x , y) → ((f x) , (g y))}
 
-_Χ₂_ : {A B C D E F : Set} → (A → C → E) → (B → D → F) → Pair A B → Pair C D → Pair E F
-f Χ₂ g = λ {(x , y) (w , z) → ((f x w) , (g y z))}
+-- _Χ₂_ : {A B C D E F : Set} → (A → C → E) → (B → D → F) → Pair A B → Pair C D → Pair E F
+-- f Χ₂ g = λ {(x , y) (w , z) → ((f x w) , (g y z))}
 
 ```
 
@@ -245,57 +438,51 @@ The type class `Additive` just requires an *associative* binary joining operator
 In order to be a member of this class, _all_ elements of the candidate type must be suitable as inputs (in either position) to this joining operator.
 
 ```agda
-record Additive (A : Set) : Set where
-  infixl 6 _⊕_  -- Just matching associativity/priority of `_+_`.
-  field
-    _⊕_ : A → A → A
-    assoc-⊕ : (x y z : A) → (x ⊕ y) ⊕ z ≡ x ⊕ (y ⊕ z)
-open Additive {{ ... }}
 
 ```
 
 All of our previously defined types, except `Term`,  have `Additive` instances:
 
 ```agda
-instance
-  RealAdditive : Additive ℜ
-  RealAdditive = record
-    { _⊕_     = _+_
-    ; assoc-⊕ = λ {x y z → assoc-+ {x} {y} {z}}
-    }
+-- instance
+--   RealAdditive : Additive ℜ
+--   RealAdditive = record
+--     { _⊕_     = _+_
+--     ; assoc-⊕ = λ {x y z → assoc-+ {x} {y} {z}}
+--     }
 
-  ScalarAdditive : Additive Scalar
-  ScalarAdditive = record
-    { _⊕_ = _+§_
-    ; assoc-⊕ = λ {x y z → assoc-+§ x y z}
-    }
+--   ScalarAdditive : Additive Scalar
+--   ScalarAdditive = record
+--     { _⊕_ = _+§_
+--     ; assoc-⊕ = λ {x y z → assoc-+§ x y z}
+--     }
 
-  -- ToDo: Review paper, to determine proper spec. for this implementation.
-  PairAdditive : {A B : Set} {{_ : Additive A}} {{_ : Additive B}}
-               → Additive (Pair A B)
-  PairAdditive = record
-    { _⊕_ = (_⊕_ Χ₂ _⊕_)
-    ; assoc-⊕ =
-        λ { (x₁ , x₂) (y₁ , y₂) (z₁ , z₂) →
-              begin
-                (x₁ ⊕ y₁ ⊕ z₁   , x₂ ⊕ y₂ ⊕ z₂)
-              ≡⟨ cong (_, x₂ ⊕ y₂ ⊕ z₂) (assoc-⊕ x₁ y₁ z₁) ⟩
-                (x₁ ⊕ (y₁ ⊕ z₁) , x₂ ⊕ y₂ ⊕ z₂)
-              ≡⟨ cong (x₁ ⊕ (y₁ ⊕ z₁) ,_) (assoc-⊕ x₂ y₂ z₂) ⟩
-                (x₁ ⊕ (y₁ ⊕ z₁) , x₂ ⊕ (y₂ ⊕ z₂))
-              ∎
-          }
-    }
+--   -- ToDo: Review paper, to determine proper spec. for this implementation.
+--   PairAdditive : {A B : Set} {{_ : Additive A}} {{_ : Additive B}}
+--                → Additive (Pair A B)
+--   PairAdditive = record
+--     { _⊕_ = (_⊕_ Χ₂ _⊕_)
+--     ; assoc-⊕ =
+--         λ { (x₁ , x₂) (y₁ , y₂) (z₁ , z₂) →
+--               begin
+--                 (x₁ ⊕ y₁ ⊕ z₁   , x₂ ⊕ y₂ ⊕ z₂)
+--               ≡⟨ cong (_, x₂ ⊕ y₂ ⊕ z₂) (assoc-⊕ x₁ y₁ z₁) ⟩
+--                 (x₁ ⊕ (y₁ ⊕ z₁) , x₂ ⊕ y₂ ⊕ z₂)
+--               ≡⟨ cong (x₁ ⊕ (y₁ ⊕ z₁) ,_) (assoc-⊕ x₂ y₂ z₂) ⟩
+--                 (x₁ ⊕ (y₁ ⊕ z₁) , x₂ ⊕ (y₂ ⊕ z₂))
+--               ∎
+--           }
+--     }
 
-  -- TermAdditive : Additive Term
-  -- TermAdditive = record
-  --   { _⊕_ =
-  --     λ { (σ x) (σ y)         → σ (x + y)
-  --       ; (σ x) (y₁ , y₂)     → σ x ⊕ y₁ , σ x ⊕ y₂
-  --       ; (x₁ , x₂) (σ y)     → {!!}
-  --       ; (x₁ , x₂) (y₁ , y₂) → {!!}}
-  --   ; assoc-⊕ = {!!}
-  --   }
+--   -- TermAdditive : Additive Term
+--   -- TermAdditive = record
+--   --   { _⊕_ =
+--   --     λ { (σ x) (σ y)         → σ (x + y)
+--   --       ; (σ x) (y₁ , y₂)     → σ x ⊕ y₁ , σ x ⊕ y₂
+--   --       ; (x₁ , x₂) (σ y)     → {!!}
+--   --       ; (x₁ , x₂) (y₁ , y₂) → {!!}}
+--   --   ; assoc-⊕ = {!!}
+--   --   }
 
 ```
 
@@ -321,26 +508,21 @@ This class defines a binary scaling operator taking one real value and one membe
 In order to be a member of this class any member of the type must be combinable with any real value, via the scaling operator, producing a result also within the type.
 
 ```agda
-record Scalable (A : Set) : Set where
-  infixl 7 _⊛_
-  field
-    _⊛_ : ℜ → A → A
-open Scalable {{ ... }}
 ```
 
 Again, all of our previously defined types, except `Term`, have instances:
 
 ```agda
-instance
-  RealScalable : Scalable ℜ
-  RealScalable = record { _⊛_ = _*_ }
+-- instance
+--   RealScalable : Scalable ℜ
+--   RealScalable = record { _⊛_ = _*_ }
 
-  ScalarScalable : Scalable Scalar
-  ScalarScalable = record { _⊛_ = _*§_ }
+--   ScalarScalable : Scalable Scalar
+--   ScalarScalable = record { _⊛_ = _*§_ }
   
-  -- ToDo: Review paper, to determine proper spec. for this implementation.
-  PairScalable : {A B : Set} {{_ : Scalable A}} {{_ : Scalable B}} → Scalable (Pair A B)
-  PairScalable = record { _⊛_ = λ m → (m ⊛_) Χ (m ⊛_) }
+--   -- ToDo: Review paper, to determine proper spec. for this implementation.
+--   PairScalable : {A B : Set} {{_ : Scalable A}} {{_ : Scalable B}} → Scalable (Pair A B)
+--   PairScalable = record { _⊛_ = λ m → (m ⊛_) Χ (m ⊛_) }
 
 ```
 
@@ -350,22 +532,6 @@ This class captures the meaning of _linearity_.
 The class considers a function to be linear if it (as Conal notes in his paper) distributes over addition and scaling.
 
 ```agda
-record LinMap {A B : Set}
-              {{_ : Additive A}} {{_ : Additive B}}
-              {{_ : Scalable A}} {{_ : Scalable B}}
-              : Set where
-  field
-    f      : A → B
-    
-    adds   : ∀ (a b : A)
-             ----------------------
-           → f (a ⊕ b) ≡ f a ⊕ f b
-
-    scales : ∀ (s : ℜ) (a : A)
-             --------------------
-           → f (s ⊛ a) ≡ s ⊛ f a
-
-open LinMap {{ ... }}
 
 ```
 
@@ -376,29 +542,29 @@ It is simply a line in the xy-plane translating x-coordinate inputs to y-coordin
 Since it must pass through the origin, in order to be linear, it is defined by a single quantity: its *slope*, which I refer to in the code as `m`, following what I learned in high school trigonometry class.
 
 ```agda
-scalar-map : ℜ → LinMap {ℜ} {ℜ}
-scalar-map m = record
-  { f      = m *_
-  ; adds   = λ a b → distrib {m} {a} {b}
-  ; scales =
-      λ { s a → begin
-                  m * (s * a)
-                ≡⟨ sym (assoc-* {m}) ⟩
-                  (m * s) * a
-                ≡⟨ cong (_* a) (commut-* {m} {s}) ⟩
-                  (s * m) * a
-                ≡⟨ assoc-* {s} ⟩
-                  s * (m * a)
-                ∎
-        }
-  }
+-- scalar-map : ℜ → LinMap {ℜ} {ℜ}
+-- scalar-map m = record
+--   { f      = m *_
+--   ; adds   = λ a b → distrib {m} {a} {b}
+--   ; scales =
+--       λ { s a → begin
+--                   m * (s * a)
+--                 ≡⟨ sym (assoc-* {m}) ⟩
+--                   (m * s) * a
+--                 ≡⟨ cong (_* a) (commut-* {m} {s}) ⟩
+--                   (s * m) * a
+--                 ≡⟨ assoc-* {s} ⟩
+--                   s * (m * a)
+--                 ∎
+--         }
+--   }
 
--- To accommodate `_≃_`, which only accepts arguments of type `Set`.
-record ScalarMap : Set where
-  field
-    m : ℜ
-  map : LinMap {ℜ} {ℜ}
-  map = scalar-map m
+-- -- To accommodate `_≃_`, which only accepts arguments of type `Set`.
+-- record ScalarMap : Set where
+--   field
+--     m : ℜ
+--   map : LinMap {ℜ} {ℜ}
+--   map = scalar-map m
 
 ```
 
@@ -409,56 +575,56 @@ I might have, instead, taken their product.
 What justifies this choice?
 
 ```agda
-pair-map : Pair ℜ ℜ → LinMap {Pair ℜ ℜ} {ℜ}
-pair-map (m₁ , m₂) = record
-  { f = λ { (x , y) → (m₁ * x) + (m₂ * y) }
-  ; adds = λ { (x , y) (x₁ , y₁) →
-                 begin
-                   (m₁ * (x + x₁)) + (m₂ * (y + y₁))
-                 ≡⟨ cong (_+ (m₂ * (y + y₁))) (distrib {m₁} {x} {x₁}) ⟩
-                   ((m₁ * x) + (m₁ * x₁)) + (m₂ * (y + y₁))
-                 ≡⟨ cong (((m₁ * x) + (m₁ * x₁)) +_) (distrib {m₂} {y} {y₁}) ⟩
-                   ((m₁ * x) + (m₁ * x₁)) + ((m₂ * y) + (m₂ * y₁))
-                 ≡⟨ sym (assoc-+ {(m₁ * x) + (m₁ * x₁)} {(m₂ * y)} {(m₂ * y₁)}) ⟩
-                   (((m₁ * x) + (m₁ * x₁)) + (m₂ * y)) + (m₂ * y₁)
-                 ≡⟨ cong (_+ (m₂ * y₁)) (assoc-+ {(m₁ * x)} {(m₁ * x₁)} {(m₂ * y)}) ⟩
-                   ((m₁ * x) + ((m₁ * x₁) + (m₂ * y))) + (m₂ * y₁)
-                 ≡⟨ sym (sym (assoc-+ {m₁ * x} {(m₁ * x₁) + (m₂ * y)} {m₂ * y₁})) ⟩
-                   (m₁ * x) + (((m₁ * x₁) + (m₂ * y)) + (m₂ * y₁))
-                 ≡⟨ cong ((m₁ * x) +_) (cong (_+ (m₂ * y₁)) (commut-+ {m₁ * x₁} {m₂ * y})) ⟩
-                   (m₁ * x) + (((m₂ * y) + (m₁ * x₁)) + (m₂ * y₁))
-                 ≡⟨ cong ((m₁ * x) +_) (sym (sym (assoc-+ {m₂ * y} {m₁ * x₁} {m₂ * y₁}))) ⟩
-                   (m₁ * x) + ((m₂ * y) + ((m₁ * x₁) + (m₂ * y₁)))
-                 ≡⟨ sym (assoc-+ {m₁ * x} {m₂ * y} {(m₁ * x₁) + (m₂ * y₁)}) ⟩
-                   ((m₁ * x) + (m₂ * y)) + ((m₁ * x₁) + (m₂ * y₁))
-                 ∎
-             }
-  ; scales = λ { s (x , y) →
-                   begin
-                     (m₁ * (s * x)) + (m₂ * (s * y))
-                   ≡⟨ cong (_+ (m₂ * (s * y))) (sym (assoc-* {m₁} {s} {x})) ⟩
-                     ((m₁ * s) * x) + (m₂ * (s * y))
-                   ≡⟨ cong (_+ (m₂ * (s * y))) (cong (_* x) (commut-* {m₁} {s})) ⟩
-                     ((s * m₁) * x) + (m₂ * (s * y))
-                   ≡⟨ cong (_+ (m₂ * (s * y))) (assoc-* {s} {m₁} {x}) ⟩
-                     (s * (m₁ * x)) + (m₂ * (s * y))
-                   ≡⟨ cong ((s * (m₁ * x)) +_) (sym (assoc-* {m₂} {s} {y})) ⟩
-                     (s * (m₁ * x)) + ((m₂ * s) * y)
-                   ≡⟨ cong ((s * (m₁ * x)) +_) (cong (_* y) (commut-* {m₂} {s})) ⟩
-                     (s * (m₁ * x)) + ((s * m₂) * y)
-                   ≡⟨ cong ((s * (m₁ * x)) +_) (sym (sym (assoc-* {s} {m₂} {y}))) ⟩
-                     (s * (m₁ * x)) + (s * (m₂ * y))
-                   ≡⟨ sym (distrib {s} {m₁ * x} {m₂ * y}) ⟩
-                     s * ((m₁ * x) + (m₂ * y))
-                   ∎
-               }
-  }
+-- pair-map : Pair ℜ ℜ → LinMap {Pair ℜ ℜ} {ℜ}
+-- pair-map (m₁ , m₂) = record
+--   { f = λ { (x , y) → (m₁ * x) + (m₂ * y) }
+--   ; adds = λ { (x , y) (x₁ , y₁) →
+--                  begin
+--                    (m₁ * (x + x₁)) + (m₂ * (y + y₁))
+--                  ≡⟨ cong (_+ (m₂ * (y + y₁))) (distrib {m₁} {x} {x₁}) ⟩
+--                    ((m₁ * x) + (m₁ * x₁)) + (m₂ * (y + y₁))
+--                  ≡⟨ cong (((m₁ * x) + (m₁ * x₁)) +_) (distrib {m₂} {y} {y₁}) ⟩
+--                    ((m₁ * x) + (m₁ * x₁)) + ((m₂ * y) + (m₂ * y₁))
+--                  ≡⟨ sym (assoc-+ {(m₁ * x) + (m₁ * x₁)} {(m₂ * y)} {(m₂ * y₁)}) ⟩
+--                    (((m₁ * x) + (m₁ * x₁)) + (m₂ * y)) + (m₂ * y₁)
+--                  ≡⟨ cong (_+ (m₂ * y₁)) (assoc-+ {(m₁ * x)} {(m₁ * x₁)} {(m₂ * y)}) ⟩
+--                    ((m₁ * x) + ((m₁ * x₁) + (m₂ * y))) + (m₂ * y₁)
+--                  ≡⟨ sym (sym (assoc-+ {m₁ * x} {(m₁ * x₁) + (m₂ * y)} {m₂ * y₁})) ⟩
+--                    (m₁ * x) + (((m₁ * x₁) + (m₂ * y)) + (m₂ * y₁))
+--                  ≡⟨ cong ((m₁ * x) +_) (cong (_+ (m₂ * y₁)) (commut-+ {m₁ * x₁} {m₂ * y})) ⟩
+--                    (m₁ * x) + (((m₂ * y) + (m₁ * x₁)) + (m₂ * y₁))
+--                  ≡⟨ cong ((m₁ * x) +_) (sym (sym (assoc-+ {m₂ * y} {m₁ * x₁} {m₂ * y₁}))) ⟩
+--                    (m₁ * x) + ((m₂ * y) + ((m₁ * x₁) + (m₂ * y₁)))
+--                  ≡⟨ sym (assoc-+ {m₁ * x} {m₂ * y} {(m₁ * x₁) + (m₂ * y₁)}) ⟩
+--                    ((m₁ * x) + (m₂ * y)) + ((m₁ * x₁) + (m₂ * y₁))
+--                  ∎
+--              }
+--   ; scales = λ { s (x , y) →
+--                    begin
+--                      (m₁ * (s * x)) + (m₂ * (s * y))
+--                    ≡⟨ cong (_+ (m₂ * (s * y))) (sym (assoc-* {m₁} {s} {x})) ⟩
+--                      ((m₁ * s) * x) + (m₂ * (s * y))
+--                    ≡⟨ cong (_+ (m₂ * (s * y))) (cong (_* x) (commut-* {m₁} {s})) ⟩
+--                      ((s * m₁) * x) + (m₂ * (s * y))
+--                    ≡⟨ cong (_+ (m₂ * (s * y))) (assoc-* {s} {m₁} {x}) ⟩
+--                      (s * (m₁ * x)) + (m₂ * (s * y))
+--                    ≡⟨ cong ((s * (m₁ * x)) +_) (sym (assoc-* {m₂} {s} {y})) ⟩
+--                      (s * (m₁ * x)) + ((m₂ * s) * y)
+--                    ≡⟨ cong ((s * (m₁ * x)) +_) (cong (_* y) (commut-* {m₂} {s})) ⟩
+--                      (s * (m₁ * x)) + ((s * m₂) * y)
+--                    ≡⟨ cong ((s * (m₁ * x)) +_) (sym (sym (assoc-* {s} {m₂} {y}))) ⟩
+--                      (s * (m₁ * x)) + (s * (m₂ * y))
+--                    ≡⟨ sym (distrib {s} {m₁ * x} {m₂ * y}) ⟩
+--                      s * ((m₁ * x) + (m₂ * y))
+--                    ∎
+--                }
+--   }
 
-record PairMap : Set where
-  field
-    ms : Pair ℜ ℜ
-  map : LinMap {Pair ℜ ℜ} {ℜ}
-  map = pair-map ms
+-- record PairMap : Set where
+--   field
+--     ms : Pair ℜ ℜ
+--   map : LinMap {Pair ℜ ℜ} {ℜ}
+--   map = pair-map ms
 
 ```
 
@@ -526,23 +692,5 @@ contains the slope used to map the value of that element, in some hypothetical
 input vector, to its (additive) contribution to the final value `s`.
 
 ```agda
--- a⊸ℜ≃a : ∀ {A : Set} {{_ : Additive A}} {{_ : Scalable A}}
---         --------------
---       → LinMap {A} {ℜ} ≃ A
--- a⊸ℜ≃a = record
---   { to = λ { lm → {!!} }
---     -- Strategy: Perform N applications of lm.f, where N is the "size" of A.
---     -- Give each application a different "basis vector" of A (i.e. - a
---     -- value of type: A, which contains only one non-zero element: '1') and
---     -- store the result in the returned value at the position corresponding
---     -- to the single non-zero element in this particular basis vector.
---     -- Requires: {{Representable A}}
---   ; from = λ { m → {!!} }
---     -- Strategy: Build a LinMap record where `f` takes the dot product of its
---     -- input w/ `m`.
---     -- Requires: {{Zippable A}} (Do we get that for free from Representable?)
---   ; from∘to = {!!}
---   ; to∘from = {!!}
---   }
 
 ```
