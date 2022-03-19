@@ -191,15 +191,26 @@ record LinMap (A B : Set)
   field
     f      : A → B
     
-    adds   : ∀ (a b : A)
-             ----------------------
+    adds   : ∀ {a b : A}
+             ---------------------
            → f (a ⊕ b) ≡ f a ⊕ f b
 
-    scales : ∀ (s : §) (a : A)
-             --------------------
+    scales : ∀ {s : §} {a : A}
+             -------------------
            → f (s ⊛ a) ≡ s ⊛ f a
 open LinMap {{ ... }}
 
+mkLM : {A B : Set}
+       {{_ : Additive A}} {{_ : Additive B}} {{_ : Scalable A}} {{_ : Scalable B}}
+     → (f : A → B)
+     → (∀ {a b : A}       → f (a ⊕ b) ≡ f a ⊕ f b)
+     → (∀ {s : §} {c : A} → f (s ⊛ c) ≡ s ⊛ f c)
+     → LinMap A B
+mkLM f addP scaleP = record { f      = f
+                            ; adds   = addP
+                            ; scales = scaleP
+                            }
+    
 record VectorSpace (A : Set)
                    {{_ : Additive A}} {{_ : Scalable A}}
                    : Set where
@@ -214,53 +225,41 @@ record VectorSpace (A : Set)
     ·-comm-⊛    : ∀ {s : §} {a b : A}
                   -------------------------
                 → a · (s ⊛ b) ≡ s ⊛ (a · b)
+    -- Aha! Here's that property relating `basisSet` and `(_·_)` I was hunching on.
+    -- Needed to complete the definition of `from∘to` below.
+    orthonormal : ∀ {f : A → §} {x : A}
+                  ----------------------------------------------------------
+                → (foldl (λ acc v → acc ⊕ (f v) ⊛ v) id⊕ basisSet) · x ≡ f x
+    -- orthonormal : ∀ {f : A → §}
+    --               ----------------------------------------------------------
+    --             → (foldl (λ acc v → acc ⊕ (f v) ⊛ v) id⊕ basisSet) ·_ ≡ f
 open VectorSpace {{ ... }}
+
+cong₃ : ∀ {A B C D : Set} (f : A → B → C → D) {x y z u v w}
+      → x ≡ u → y ≡ v → z ≡ w → f x y z ≡ f u v w
+cong₃ f refl refl refl = refl
 
 a⊸§≃a : ∀ {A : Set}
         {{_ : Additive A}} {{_ : Scalable A}}
         {{_ : VectorSpace A}}
         -------------------------------------
       → LinMap A § ≃ A
-a⊸§≃a = record
-  { to   = λ { lm → foldl (λ acc v → acc ⊕ (LinMap.f lm v) ⊛ v) id⊕ basisSet }
-  ; from = λ { a  → record
-                      { f      = λ {x → a · x}
-                      ; adds   = λ { v₁ v₂ →
-                                       begin
-                                          a · (v₁ ⊕ v₂)
-                                        ≡⟨ ·-distrib-⊕ ⟩
-                                          (a · v₁) ⊕ (a · v₂)
-                                        ∎
-                                   }
-                      ; scales = λ { s b →
-                                       begin
-                                          a · (s ⊛ b)
-                                        ≡⟨ ·-comm-⊛ ⟩
-                                          s ⊛ (a · b)
-                                        ∎
-                                   }
-                      }
-             }
-  ; from∘to =
-      λ {lm → let a = foldl (λ acc v → acc ⊕ (LinMap.f lm v) ⊛ v) id⊕ basisSet
-              in  begin
-                    record { f      = λ {x → a · x}
-                           ; adds   = λ {a₁ a₂ → begin
-                                                   a · (a₁ ⊕ a₂)
-                                                 ≡⟨ ·-distrib-⊕ ⟩
-                                                   (a · a₁) ⊕ (a · a₂)
-                                                 ∎} 
-                           ; scales = λ {s b → begin
-                                                  a · (s ⊛ b)
-                                                ≡⟨ ·-comm-⊛ ⟩
-                                                  s ⊛ (a · b)
-                                                ∎ }
-                           }
-                  ≡⟨ {!!} ⟩
-                    lm
-                  ∎ }
-  ; to∘from = {!!}
-  }
+a⊸§≃a =
+  record
+       { to   = λ { lm → foldl (λ acc v → acc ⊕ (LinMap.f lm v) ⊛ v) id⊕ basisSet }
+       ; from = λ { a  → mkLM (a ·_) ·-distrib-⊕ ·-comm-⊛ }
+       ; from∘to =
+           λ {lm → let f′ = LinMap.f lm
+                       a  = foldl (λ acc v → acc ⊕ (f′ v) ⊛ v) id⊕ basisSet
+                   in begin
+                        mkLM (a ·_) ·-distrib-⊕ ·-comm-⊛
+                      ≡⟨ {!cong₃ mkLM ? ? ?!} ⟩
+                        mkLM f′ (LinMap.adds lm) (LinMap.scales lm)
+                      ≡⟨⟩
+                        lm
+                      ∎ }
+       ; to∘from = {!!}
+       }
 
 ```
 
