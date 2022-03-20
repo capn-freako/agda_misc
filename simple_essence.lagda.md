@@ -133,30 +133,33 @@ Let's try adding the extra necessities identified above and attacking the proof.
 I'll note any additional properties, record fields, etc. needed to complete the proof, via Agda comments, for subsequent discussion.
 
 ```agda
-module simple_essence where
+module simple_essence {s a b} where
 
 open import Data.Float
 open import Data.List
 import Relation.Binary.PropositionalEquality as Eq
 open Eq using (_≡_; refl; trans; sym; cong; cong₂; cong-app; subst)
 open Eq.≡-Reasoning using (begin_; _≡⟨⟩_; step-≡; _∎)
--- ToDo: Replace w/ equivalent from standard library:
-open import plfa_local.part1.Isomorphism
+open import Function using (_↔_; mk↔; mk↩; IsInverse)
+open import Level using (Level; _⊔_)
 
 postulate
   -- This one seems completely safe. Why isn't it in the standard library?
   id+ : {x : Float} → 0.0 + x ≡ x
 
-data § : Set where
+ℓ : Level
+ℓ = s ⊔ a ⊔ b
+
+data § : Set a where
   S : Float → §
 
-record Additive (A : Set) : Set where
+record Additive (A : Set a) : Set ℓ where
   infixl 6 _⊕_  -- Just matching associativity/priority of `_+_`.
   field
     id⊕  : A
     _⊕_  : A → A → A
     id-⊕ : (a : A)
-           ----------
+           -----------
          → id⊕ ⊕ a ≡ a
     -- assoc-⊕ : (x y z : A) → (x ⊕ y) ⊕ z ≡ x ⊕ (y ⊕ z)
 open Additive {{ ... }}
@@ -173,7 +176,7 @@ instance
                }
     }
 
-record Scalable (A : Set) : Set where
+record Scalable (A : Set a) : Set ℓ where
   infixl 7 _⊛_  -- Just matching associativity/priority of `_*_`.
   field
     _⊛_ : § → A → A
@@ -184,10 +187,10 @@ instance
     { _⊛_ = λ {(S x) (S y) → S (x * y)}
     }
 
-record LinMap (A B : Set)
+record LinMap (A : Set a) (B : Set a)
               {{_ : Additive A}} {{_ : Additive B}}
               {{_ : Scalable A}} {{_ : Scalable B}}
-              : Set where
+              : Set ℓ where
   constructor mkLM
   field
     f      : A → B
@@ -201,9 +204,9 @@ record LinMap (A B : Set)
            → f (s ⊛ a) ≡ s ⊛ f a
 open LinMap {{ ... }}
 
-record VectorSpace (A : Set)
+record VectorSpace (A : Set a)
                    {{_ : Additive A}} {{_ : Scalable A}}
-                   : Set where
+                   : Set ℓ where
   field
     -- As noted above, seems like I should have to define some properties relating these two.
     basisSet    : List A
@@ -225,31 +228,31 @@ record VectorSpace (A : Set)
     --             → (foldl (λ acc v → acc ⊕ (f v) ⊛ v) id⊕ basisSet) ·_ ≡ f
 open VectorSpace {{ ... }}
 
-cong₃ : ∀ {A B C D : Set} (f : A → B → C → D) {x y z u v w}
-      → x ≡ u → y ≡ v → z ≡ w → f x y z ≡ f u v w
-cong₃ f refl refl refl = refl
-
-a⊸§≃a : ∀ {A : Set}
+-- The Isomorphism I'm trying to prove.
+a⊸§→a : {A : Set a}
         {{_ : Additive A}} {{_ : Scalable A}}
         {{_ : VectorSpace A}}
         -------------------------------------
-      → LinMap A § ≃ A
-a⊸§≃a =
-  record
-       { to   = λ { lm → foldl (λ acc v → acc ⊕ (LinMap.f lm v) ⊛ v) id⊕ basisSet }
-       ; from = λ { a  → mkLM (a ·_) ·-distrib-⊕ ·-comm-⊛ }
-       ; from∘to =
-           λ {lm → let f′ = LinMap.f lm
-                       a  = foldl (λ acc v → acc ⊕ (f′ v) ⊛ v) id⊕ basisSet
-                   in begin
-                        mkLM (a ·_) ·-distrib-⊕ ·-comm-⊛
-                      ≡⟨ {!cong₃ mkLM ? ? ?!} ⟩
-                        mkLM f′ (LinMap.adds lm) (LinMap.scales lm)
-                      ≡⟨⟩
-                        lm
-                      ∎ }
-       ; to∘from = {!!}
-       }
+      → LinMap A § → A
+a⊸§→a = λ { lm → foldl (λ acc v → acc ⊕ (LinMap.f lm v) ⊛ v) id⊕ basisSet }
+
+a⊸§←a : {A : Set a}
+        {{_ : Additive A}} {{_ : Scalable A}}
+        {{_ : VectorSpace A}}
+        -------------------------------------
+      → A → LinMap A §
+a⊸§←a = λ { a → mkLM (a ·_) ·-distrib-⊕ ·-comm-⊛ }
+
+-- instance
+--   a⊸§→a-IsInverse-a⊸§←a : IsInverse a⊸§→a a⊸§←a
+--   a⊸§→a-IsInverse-a⊸§←a = record
+--     { isLeftInverse = mk↩ ?
+--     ; inverseʳ = ?
+--     }
+  
+a⊸§↔a : a⊸§→a ↔ a⊸§←a
+-- a⊸§↔a = mk↔ IsInverse.inverse
+a⊸§↔a = mk↔ ?
 
 ```
 
