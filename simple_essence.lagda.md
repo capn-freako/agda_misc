@@ -188,6 +188,7 @@ record LinMap (A B : Set)
               {{_ : Additive A}} {{_ : Additive B}}
               {{_ : Scalable A}} {{_ : Scalable B}}
               : Set where
+  constructor mkLM
   field
     f      : A → B
     
@@ -200,17 +201,6 @@ record LinMap (A B : Set)
            → f (s ⊛ a) ≡ s ⊛ f a
 open LinMap {{ ... }}
 
-mkLM : {A B : Set}
-       {{_ : Additive A}} {{_ : Additive B}} {{_ : Scalable A}} {{_ : Scalable B}}
-     → (f : A → B)
-     → (∀ {a b : A}       → f (a ⊕ b) ≡ f a ⊕ f b)
-     → (∀ {s : §} {c : A} → f (s ⊛ c) ≡ s ⊛ f c)
-     → LinMap A B
-mkLM f addP scaleP = record { f      = f
-                            ; adds   = addP
-                            ; scales = scaleP
-                            }
-    
 record VectorSpace (A : Set)
                    {{_ : Additive A}} {{_ : Scalable A}}
                    : Set where
