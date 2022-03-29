@@ -135,17 +135,21 @@ I'll note any additional properties, record fields, etc. needed to complete the 
 ```agda
 module simple_essence {s a b} where
 
+open import Agda.Builtin.Sigma
+open import Axiom.Extensionality.Propositional using (ExtensionalityImplicit)
 open import Data.Float
 open import Data.List
 import Relation.Binary.PropositionalEquality as Eq
 open Eq using (_≡_; refl; trans; sym; cong; cong₂; cong-app; subst)
 open Eq.≡-Reasoning using (begin_; _≡⟨⟩_; step-≡; _∎)
-open import Function using (_↔_; mk↔; mk↩; IsInverse)
+open import Function using (_↔_; mk↔; mk↩; IsInverse; id; const)
 open import Level using (Level; _⊔_)
 
 postulate
   -- This one seems completely safe. Why isn't it in the standard library?
   id+ : {x : Float} → 0.0 + x ≡ x
+  -- extensionality : ∀ {ℓ₁ ℓ₂} → Extensionality ℓ₁ ℓ₂
+  extensionality : ∀ {ℓ₁ ℓ₂} → ExtensionalityImplicit ℓ₁ ℓ₂
 
 ℓ : Level
 ℓ = s ⊔ a ⊔ b
@@ -220,12 +224,10 @@ record VectorSpace (A : Set a)
                 → a · (s ⊛ b) ≡ s ⊛ (a · b)
     -- Aha! Here's that property relating `basisSet` and `(_·_)` I was hunching on.
     -- Needed to complete the definition of `from∘to` below.
-    orthonormal : ∀ {f : A → §} {x : A}
+    orthonormal : ∀ {f : A → §}
+                → {x : A}
                   ----------------------------------------------------------
                 → (foldl (λ acc v → acc ⊕ (f v) ⊛ v) id⊕ basisSet) · x ≡ f x
-    -- orthonormal : ∀ {f : A → §}
-    --               ----------------------------------------------------------
-    --             → (foldl (λ acc v → acc ⊕ (f v) ⊛ v) id⊕ basisSet) ·_ ≡ f
 open VectorSpace {{ ... }}
 
 -- The Isomorphism I'm trying to prove.
@@ -243,16 +245,33 @@ a⊸§←a : {A : Set a}
       → A → LinMap A §
 a⊸§←a = λ { a → mkLM (a ·_) ·-distrib-⊕ ·-comm-⊛ }
 
--- instance
---   a⊸§→a-IsInverse-a⊸§←a : IsInverse a⊸§→a a⊸§←a
---   a⊸§→a-IsInverse-a⊸§←a = record
---     { isLeftInverse = mk↩ ?
---     ; inverseʳ = ?
---     }
-  
-a⊸§↔a : a⊸§→a ↔ a⊸§←a
--- a⊸§↔a = mk↔ IsInverse.inverse
-a⊸§↔a = mk↔ ?
+postulate
+  x·z≡y·z→x≡y : {A : Set a}
+                {{_ : Additive A}} {{_ : Scalable A}} {{_ : VectorSpace A}}
+                {x y z : A}
+              → x · z ≡ y · z
+                -----------------------------------------------------------
+              → x ≡ y
+
+-- ToDo: Replace postulate above w/ definition below.
+-- x·z≡y·z→x≡y x·z≡y·z = {!!}
+
+a⊸§↔a : {A : Set a}
+        {{_ : Additive A}} {{_ : Scalable A}}
+        {{_ : VectorSpace A}}
+        -------------------------------------
+      → (LinMap A §) ↔ A
+a⊸§↔a {A} = mk↔ ( (λ {x → begin
+                        a⊸§→a (a⊸§←a x)
+                      ≡⟨⟩
+                        a⊸§→a (mkLM (x ·_) ·-distrib-⊕ ·-comm-⊛)
+                      ≡⟨⟩
+                        foldl (λ acc v → acc ⊕ (x · v) ⊛ v) id⊕ basisSet
+                      ≡⟨ x·z≡y·z→x≡y (extensionality orthonormal) ⟩
+                        x
+                      ∎})
+                , {!!}
+                )
 
 ```
 
