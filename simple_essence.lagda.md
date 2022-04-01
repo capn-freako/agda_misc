@@ -150,7 +150,6 @@ postulate
   -- This one seems completely safe. Why isn't it in the standard library?
   id+ : {x : Float} → 0.0 + x ≡ x
   extensionality : ∀ {ℓ₁ ℓ₂} → Extensionality ℓ₁ ℓ₂
-  -- extensionality : ∀ {ℓ₁ ℓ₂} → ExtensionalityImplicit ℓ₁ ℓ₂
 
 ℓ : Level
 ℓ = s ⊔ a ⊔ b
