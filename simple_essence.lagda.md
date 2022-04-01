@@ -136,20 +136,21 @@ I'll note any additional properties, record fields, etc. needed to complete the 
 module simple_essence {s a b} where
 
 open import Agda.Builtin.Sigma
-open import Axiom.Extensionality.Propositional using (ExtensionalityImplicit)
+open import Axiom.Extensionality.Propositional using (Extensionality)
 open import Data.Float
 open import Data.List
+open import Function using (_↔_; mk↔; id)
+open import Level using (Level; _⊔_)
+
 import Relation.Binary.PropositionalEquality as Eq
 open Eq using (_≡_; refl; trans; sym; cong; cong₂; cong-app; subst)
 open Eq.≡-Reasoning using (begin_; _≡⟨⟩_; step-≡; _∎)
-open import Function using (_↔_; mk↔; mk↩; IsInverse; id; const)
-open import Level using (Level; _⊔_)
 
 postulate
   -- This one seems completely safe. Why isn't it in the standard library?
   id+ : {x : Float} → 0.0 + x ≡ x
-  -- extensionality : ∀ {ℓ₁ ℓ₂} → Extensionality ℓ₁ ℓ₂
-  extensionality : ∀ {ℓ₁ ℓ₂} → ExtensionalityImplicit ℓ₁ ℓ₂
+  extensionality : ∀ {ℓ₁ ℓ₂} → Extensionality ℓ₁ ℓ₂
+  -- extensionality : ∀ {ℓ₁ ℓ₂} → ExtensionalityImplicit ℓ₁ ℓ₂
 
 ℓ : Level
 ℓ = s ⊔ a ⊔ b
@@ -208,6 +209,17 @@ record LinMap (A : Set a) (B : Set a)
            → f (s ⊛ a) ≡ s ⊛ f a
 open LinMap {{ ... }}
 
+-- As per Conal's advice:
+-- ⊸≈ = isEquivalence LinMap.f Eq.isEquivalence
+postulate
+  ⊸≡ : {A B : Set a}
+       {{_ : Additive A}} {{_ : Additive B}}
+       {{_ : Scalable A}} {{_ : Scalable B}}
+       {lm₁ lm₂ : LinMap A B}
+     → LinMap.f lm₁ ≡ LinMap.f lm₂
+       ---------------------------
+     → lm₁ ≡ lm₂
+
 record VectorSpace (A : Set a)
                    {{_ : Additive A}} {{_ : Scalable A}}
                    : Set ℓ where
@@ -223,7 +235,7 @@ record VectorSpace (A : Set a)
                   -------------------------
                 → a · (s ⊛ b) ≡ s ⊛ (a · b)
     -- Aha! Here's that property relating `basisSet` and `(_·_)` I was hunching on.
-    -- Needed to complete the definition of `from∘to` below.
+    -- Needed to complete the definition of `mk↔`, below.
     orthonormal : ∀ {f : A → §}
                 → {x : A}
                   ----------------------------------------------------------
@@ -245,15 +257,16 @@ a⊸§←a : {A : Set a}
       → A → LinMap A §
 a⊸§←a = λ { a → mkLM (a ·_) ·-distrib-⊕ ·-comm-⊛ }
 
+-- Danger, Will Robinson!
 postulate
   x·z≡y·z→x≡y : {A : Set a}
                 {{_ : Additive A}} {{_ : Scalable A}} {{_ : VectorSpace A}}
-                {x y z : A}
-              → x · z ≡ y · z
+                {x y : A}
+              → (∀ {z : A} → x · z ≡ y · z)
                 -----------------------------------------------------------
               → x ≡ y
-
--- ToDo: Replace postulate above w/ definition below.
+-- ToDo: Try replacing postulate above w/ definition below.
+--       (Perhaps, a proof by contradiction, starting w/ `x ≢ y`?)
 -- x·z≡y·z→x≡y x·z≡y·z = {!!}
 
 a⊸§↔a : {A : Set a}
@@ -261,17 +274,43 @@ a⊸§↔a : {A : Set a}
         {{_ : VectorSpace A}}
         -------------------------------------
       → (LinMap A §) ↔ A
-a⊸§↔a {A} = mk↔ ( (λ {x → begin
-                        a⊸§→a (a⊸§←a x)
-                      ≡⟨⟩
-                        a⊸§→a (mkLM (x ·_) ·-distrib-⊕ ·-comm-⊛)
-                      ≡⟨⟩
-                        foldl (λ acc v → acc ⊕ (x · v) ⊛ v) id⊕ basisSet
-                      ≡⟨ x·z≡y·z→x≡y (extensionality orthonormal) ⟩
-                        x
-                      ∎})
-                , {!!}
-                )
+a⊸§↔a {A} =
+  mk↔ {f = a⊸§→a} {f⁻¹ = a⊸§←a}
+      ( (λ {x → begin
+                  a⊸§→a (a⊸§←a x)
+                ≡⟨⟩
+                  a⊸§→a (mkLM (x ·_) ·-distrib-⊕ ·-comm-⊛)
+                ≡⟨⟩
+                  foldl (λ acc v → acc ⊕ (x · v) ⊛ v) id⊕ basisSet
+                ≡⟨ x·z≡y·z→x≡y (orthonormal {f = (x ·_)}) ⟩
+                  x
+                ∎})
+      , λ {lm → begin
+                  a⊸§←a (a⊸§→a lm)
+                ≡⟨⟩
+                  a⊸§←a (foldl (λ acc v → acc ⊕ (LinMap.f lm v) ⊛ v) id⊕ basisSet)
+                ≡⟨⟩
+                  mkLM ((foldl (λ acc v → acc ⊕ (LinMap.f lm v) ⊛ v) id⊕ basisSet)·_)
+                       ·-distrib-⊕ ·-comm-⊛
+                ≡⟨ ⊸≡ ( extensionality
+                          ( λ x → orthonormal {f = LinMap.f lm} {x = x} )
+                      )
+                 ⟩
+                  lm
+                ∎}
+      )
+
+-- This, done in response to Conal's suggestion of using `Equivalence`, instead of
+-- `Equality`, compiles fine but seems too easy and too weak.
+-- There's no guarantee of returning back where we started after a double pass, for instance.
+-- I think that I didn't fully grok the hint he was giving me.
+--
+-- a⊸§⇔a : {A : Set a}
+--         {{_ : Additive A}} {{_ : Scalable A}}
+--         {{_ : VectorSpace A}}
+--         -------------------------------------
+--       → (LinMap A §) ⇔ A
+-- a⊸§⇔a {A} = mk⇔ a⊸§→a a⊸§←a
 
 ```
 
