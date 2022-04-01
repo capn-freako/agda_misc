@@ -1,6 +1,8 @@
 ---
+
 format: markdown
-title: Agda Doodlings, re: Conal's "Simple Essence of Automatic Differentiation"
+
+title: "Agda Doodlings, re: Conal`s _Simple Essence of Automatic Differentiation_"
 ---
 
 # Agda Doodlings, re: Conal's "Simple Essence of Automatic Differentiation"
