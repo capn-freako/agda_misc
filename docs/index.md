@@ -3,4 +3,4 @@
 
 ## Welcome to my random _Agda_ musings.
 
-{% include html/simple_essence.md %}
+[Simple Essence](html/simple_essence.md)
