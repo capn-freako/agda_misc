@@ -1,88 +1,144 @@
-<p>{% include mathjax.html %}</p>
-<p>In this <a href="https://agda.readthedocs.io/en/v2.6.2.1/tools/literate-programming.html#literate-markdown">literate Agda</a> file I’m exploring some of the ideas written about by Conal Elliott in his paper: <em>The Simple Essence of Automatic Differentiation</em>. In particular, I’m attempting to prove, using Agda, some of the isomorphisms that Conal reveals in that paper.</p>
-<h2 id="introduction">Introduction</h2>
-<p>In (re)reading Conal’s paper, I noticed something that I thought was a typo:</p>
-<blockquote>
-<p>The internal representation of <br /><span class="math display"><em>C</em><em>o</em><em>n</em><em>t</em><sub>( ⊸ )</sub><sup><em>s</em></sup> <em>a</em> <em>b</em></span><br /> is <br /><span class="math display">(<em>b</em> ⊸ <em>s</em>) → (<em>a</em> ⊸ <em>s</em>)</span><br />, which is isomorphic to <br /><span class="math display"><em>b</em> → <em>a</em></span><br />.</p>
-</blockquote>
-<p>I thought for sure Conal meant to say:</p>
-<blockquote>
-<p>… isomorphic to <br /><span class="math display"><em>a</em> → <em>b</em></span><br />.</p>
-</blockquote>
-<p>since the continuation must “know” how to get from <code>a</code> to <code>b</code>, in order to offer the type signature it does. (Can this be proven in Agda, perhaps by using a proof-by-contradiction approach?)</p>
-<p>But, when I discussed this with Conal, he drew my attention to the paragraph immediately above, in which he points out:</p>
-<blockquote>
-<p>In particular, every linear map in <br /><span class="math display"><em>A</em> ⊸ <em>s</em></span><br /> has the form <code>dot u</code> for some <code>u :: A</code>,</p>
-</blockquote>
-<p>And that, therefore, since <br /><span class="math display"><em>a</em> ⊸ <em>s</em></span><br /> is isomorphic to <br /><span class="math display"><em>a</em></span><br />, <br /><span class="math display">(<em>b</em> ⊸ <em>s</em>) → (<em>a</em> ⊸ <em>s</em>)</span><br /> is indeed isomorphic to <br /><span class="math display"><em>b</em> → <em>a</em></span><br />.</p>
-<p>Well, that’s very interesting, because now we’ve got something (the <em>continuation</em>) that is isomorphic to both <br /><span class="math display"><em>a</em> → <em>b</em></span><br /> and <br /><span class="math display"><em>b</em> → <em>a</em></span><br />. And, because the isomorphism relation is <em>transitive</em>, that means: <br /><span class="math display"><em>a</em> → <em>b</em> ≅ <em>b</em> → <em>a</em></span><br />! Of course, this only holds in the special case where both types <br /><span class="math display"><em>a</em></span><br /> and <br /><span class="math display"><em>b</em></span><br /> have linear maps to the underlying scalar field. And the existence of this duality under this very special condition is sort of the punchline of Conal’s paper. Nevertheless, it struck me as quite powerful to be able to prove, at the outset and using Agda, that the duality must exist.</p>
-<h2 id="preliminaries">Preliminaries</h2>
-<p>First, we need to codify in Agda what we mean by a <em>linear map</em>. We’ll take Conal’s definition: a linear map is…</p>
-<blockquote>
-<p>a function that distributes over tensor addition and scalar multiplication.</p>
-</blockquote>
-<p>That is:</p>
-<p><br /><span class="math display"><em>f</em> : <em>A</em> → <em>B</em></span><br /></p>
-<p>and:</p>
-<p><br /><span class="math display"><em>f</em>(<em>x</em> ⊕ <em>y</em>) = <em>f</em><em>x</em> ⊕ <em>f</em><em>y</em></span><br /></p>
-<p><br /><span class="math display"><em>f</em>(<em>s</em> ⊗ <em>x</em>) = <em>s</em> ⊗ <em>f</em><em>x</em></span><br /></p>
-<p>Right away, we’ve identified several necessities, in addition to those explicitly written above:</p>
-<ol type="1">
-<li><p>The <br /><span class="math display">⊕</span><br /> operator must take two arguments of the same type and combine them, returning a result also within the type.</p></li>
-<li><p>Both types <br /><span class="math display"><em>A</em></span><br /> and <br /><span class="math display"><em>B</em></span><br /> <em>must</em> have the <br /><span class="math display">⊕</span><br /> operator defined on them.</p></li>
-<li><p>The <br /><span class="math display">⊗</span><br /> operator must take a scalar as its first argument and some type as its second, returning a result value within that type.</p></li>
-<li><p>Both types <br /><span class="math display"><em>A</em></span><br /> and <br /><span class="math display"><em>B</em></span><br /> <em>must</em> have the <br /><span class="math display">⊗</span><br /> operator defined on them.</p></li>
-</ol>
-<p>We can codify all this in Agda fairly easily:</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode agda"><code class="sourceCode agda"><a class="sourceLine" id="cb1-1" data-line-number="1"><span class="ot">{</span>% highlight haskell linenos %<span class="ot">}</span></a>
-<a class="sourceLine" id="cb1-2" data-line-number="2"><span class="kw">data</span> § <span class="ot">:</span> <span class="dt">Set</span> <span class="kw">where</span></a>
-<a class="sourceLine" id="cb1-3" data-line-number="3">  § <span class="ot">:</span> §</a>
-<a class="sourceLine" id="cb1-4" data-line-number="4"></a>
-<a class="sourceLine" id="cb1-5" data-line-number="5"><span class="kw">record</span> Additive <span class="ot">(</span>A <span class="ot">:</span> <span class="dt">Set</span><span class="ot">)</span> <span class="ot">:</span> <span class="dt">Set</span> <span class="kw">where</span></a>
-<a class="sourceLine" id="cb1-6" data-line-number="6">  <span class="kw">infixl</span> <span class="dv">6</span> <span class="ot">_</span>⊕<span class="ot">_</span>  <span class="co">-- Just matching associativity/priority of `_+_`.</span></a>
-<a class="sourceLine" id="cb1-7" data-line-number="7">  <span class="kw">field</span></a>
-<a class="sourceLine" id="cb1-8" data-line-number="8">    <span class="ot">_</span>⊕<span class="ot">_</span> <span class="ot">:</span> A <span class="ot">→</span> A <span class="ot">→</span> A</a>
-<a class="sourceLine" id="cb1-9" data-line-number="9"></a>
-<a class="sourceLine" id="cb1-10" data-line-number="10"><span class="kw">record</span> Scalable <span class="ot">(</span>A <span class="ot">:</span> <span class="dt">Set</span><span class="ot">)</span> <span class="ot">:</span> <span class="dt">Set</span> <span class="kw">where</span></a>
-<a class="sourceLine" id="cb1-11" data-line-number="11">  <span class="kw">infixl</span> <span class="dv">7</span> <span class="ot">_</span>⊛<span class="ot">_</span>  <span class="co">-- Just matching associativity/priority of `_*_`.</span></a>
-<a class="sourceLine" id="cb1-12" data-line-number="12">  <span class="kw">field</span></a>
-<a class="sourceLine" id="cb1-13" data-line-number="13">    <span class="ot">_</span>⊛<span class="ot">_</span> <span class="ot">:</span> § <span class="ot">→</span> A <span class="ot">→</span> A</a>
-<a class="sourceLine" id="cb1-14" data-line-number="14"></a>
-<a class="sourceLine" id="cb1-15" data-line-number="15"><span class="kw">record</span> LinMap <span class="ot">{</span>A B <span class="ot">:</span> <span class="dt">Set</span><span class="ot">}</span></a>
-<a class="sourceLine" id="cb1-16" data-line-number="16">              ⦃<span class="ot">_</span> <span class="ot">:</span> Additive A⦄ ⦃<span class="ot">_</span> <span class="ot">:</span> Additive B⦄</a>
-<a class="sourceLine" id="cb1-17" data-line-number="17">              ⦃<span class="ot">_</span> <span class="ot">:</span> Scalable A⦄ ⦃<span class="ot">_</span> <span class="ot">:</span> Scalable B⦄</a>
-<a class="sourceLine" id="cb1-18" data-line-number="18">              <span class="ot">:</span> <span class="dt">Set</span> <span class="kw">where</span></a>
-<a class="sourceLine" id="cb1-19" data-line-number="19">  <span class="kw">field</span></a>
-<a class="sourceLine" id="cb1-20" data-line-number="20">    f      <span class="ot">:</span> A <span class="ot">→</span> B</a>
-<a class="sourceLine" id="cb1-21" data-line-number="21"></a>
-<a class="sourceLine" id="cb1-22" data-line-number="22">    adds   <span class="ot">:</span> <span class="ot">∀</span> <span class="ot">(</span>a b <span class="ot">:</span> A<span class="ot">)</span></a>
-<a class="sourceLine" id="cb1-23" data-line-number="23">             <span class="co">----------------------</span></a>
-<a class="sourceLine" id="cb1-24" data-line-number="24">           <span class="ot">→</span> f <span class="ot">(</span>a ⊕ b<span class="ot">)</span> ≡ f a ⊕ f b</a>
-<a class="sourceLine" id="cb1-25" data-line-number="25"></a>
-<a class="sourceLine" id="cb1-26" data-line-number="26">    scales <span class="ot">:</span> <span class="ot">∀</span> <span class="ot">(</span>s <span class="ot">:</span> §<span class="ot">)</span> <span class="ot">(</span>a <span class="ot">:</span> A<span class="ot">)</span></a>
-<a class="sourceLine" id="cb1-27" data-line-number="27">             <span class="co">--------------------</span></a>
-<a class="sourceLine" id="cb1-28" data-line-number="28">           <span class="ot">→</span> f <span class="ot">(</span>s ⊛ a<span class="ot">)</span> ≡ s ⊛ f a</a>
-<a class="sourceLine" id="cb1-29" data-line-number="29"><span class="ot">{</span>% endhighlight %<span class="ot">}</span></a></code></pre></div>
-<h2 id="additional-requirements">Additional Requirements</h2>
-<p>Okay, let’s see if what we’ve got so far is enough to attack the first isomorphism I’d like to prove: <code>A ⊸ § ≅ A</code>, i.e., a linear map from type <code>A</code> to scalar is isomorphic to the type <code>A</code> itself. Proving this isomorphism in Agda amounts to constructing the following record:</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode agda"><code class="sourceCode agda"><a class="sourceLine" id="cb2-1" data-line-number="1"><span class="ot">{</span>% highlight haskell linenos %<span class="ot">}</span></a>
-<a class="sourceLine" id="cb2-2" data-line-number="2">a⊸§≃a <span class="ot">:</span> <span class="ot">∀</span> <span class="ot">{</span>A <span class="ot">:</span> <span class="dt">Set</span><span class="ot">}</span> ⦃<span class="ot">_</span> <span class="ot">:</span> Additive A⦄ ⦃<span class="ot">_</span> <span class="ot">:</span> Scalable A⦄</a>
-<a class="sourceLine" id="cb2-3" data-line-number="3">         <span class="co">--------------------------------------------</span></a>
-<a class="sourceLine" id="cb2-4" data-line-number="4">       <span class="ot">→</span> LinMap <span class="ot">{</span>A<span class="ot">}</span> <span class="ot">{</span>§<span class="ot">}</span> ≃ A</a>
-<a class="sourceLine" id="cb2-5" data-line-number="5">a⊸§≃a <span class="ot">=</span> <span class="kw">record</span></a>
-<a class="sourceLine" id="cb2-6" data-line-number="6">  <span class="ot">{</span> <span class="kw">to</span>   <span class="ot">=</span> <span class="ot">λ</span> <span class="ot">{</span> lm <span class="ot">→</span> ? <span class="ot">}</span></a>
-<a class="sourceLine" id="cb2-7" data-line-number="7">  <span class="ot">;</span> from <span class="ot">=</span> <span class="ot">λ</span> <span class="ot">{</span> a  <span class="ot">→</span> ? <span class="ot">}</span></a>
-<a class="sourceLine" id="cb2-8" data-line-number="8">  <span class="ot">;</span> from∘to <span class="ot">=</span> ?</a>
-<a class="sourceLine" id="cb2-9" data-line-number="9">  <span class="ot">;</span> to∘from <span class="ot">=</span> ?</a>
-<a class="sourceLine" id="cb2-10" data-line-number="10">  <span class="ot">}</span></a>
-<a class="sourceLine" id="cb2-11" data-line-number="11"><span class="ot">{</span>% endhighlight %<span class="ot">}</span></a></code></pre></div>
-<p>Now, how to implement <code>to</code> and <code>from</code>?</p>
-<p>If we required that <code>Additive</code> provide a <em>left identity</em> for <code>⊕</code> then it would be enough to require that <code>A</code> be able to produce an iterable set of basis vectors. In that case, <code>to</code> could be implemented, via the following:</p>
-<p>{% highlight haskell linenos %} to = λ lm → foldl (λ acc v → acc ⊕ (lm.f v) ⊛ v) id-⊕ vs {% endhighlight %}</p>
-<p>Implementing <code>from</code> is fairly simple, but does require that <code>A</code> have an inner product. In that case, we just build a <code>LinMap</code> record where <code>f</code> takes the dot product of its input w/ <code>a</code>.</p>
-<p><strong>Note:</strong> My hunch is that I’m going to have to define some property of type <code>A</code> that relates the “inner product” to its “basis vectors”, in order to tie all this together, but it’s unclear to me what that property is, or needs to be.</p>
-<h2 id="first-proof-attempt">First Proof Attempt</h2>
-<p>Let’s try adding the extra necessities identified above and attacking the proof. I’ll note any additional properties, record fields, etc. needed to complete the proof, via Agda comments, for subsequent discussion.</p>
+---
+format: 'markdown+latex'
+title: 'Agda Doodlings Involving Linearity & Vector Spaces'
+description: Agda proofs of some isomorphisms revealed by Conal in his paper.
+author: 'David Banas <capn.freako@gmail.com>'
+date: 2022-04-02
+copy: Copyright (c) 2022 David Banas; all rights reserved World wide.
+...
+
+{% include mathjax.html %}
+
+In this [literate Agda](https://agda.readthedocs.io/en/v2.6.2.1/tools/literate-programming.html#literate-markdown) file I'm exploring some of the ideas written about by Conal Elliott in his paper: _The Simple Essence of Automatic Differentiation_.
+In particular, I'm attempting to prove, using Agda, some of the isomorphisms that Conal reveals in that paper.
+
+## Introduction
+
+In (re)reading Conal's paper, I noticed something that I thought was a typo:
+
+> The internal representation of $$Cont^{s}_{(⊸)} \, a \, b$$ is $$(b ⊸ s) → (a ⊸ s)$$, which is isomorphic to $$b → a$$.
+
+I thought for sure Conal meant to say:
+
+> ... isomorphic to $$a → b$$.
+
+since the continuation must "know" how to get from `a` to `b`, in order to offer the type signature it does.
+(Can this be proven in Agda, perhaps by using a proof-by-contradiction approach?)
+
+But, when I discussed this with Conal, he drew my attention to the paragraph immediately above, in which he points out:
+
+> In particular, every linear map in $$A ⊸ s$$ has the form `dot u` for some `u :: A`,
+
+And that, therefore, since $$a ⊸ s$$ is isomorphic to $$a$$,  $$(b ⊸ s) → (a ⊸ s)$$ is indeed isomorphic to $$b → a$$.
+
+Well, that's very interesting, because now we've got something (the _continuation_) that is isomorphic to both $$a → b$$ and $$b → a$$.
+And, because the isomorphism relation is _transitive_, that means: $$a → b ≅ b → a$$!
+Of course, this only holds in the special case where both types $$a$$ and $$b$$ have linear maps to the underlying scalar field.
+And the existence of this duality under this very special condition is sort of the punchline of Conal's paper.
+Nevertheless, it struck me as quite powerful to be able to prove, at the outset and using Agda, that the duality must exist.
+
+## Preliminaries
+
+First, we need to codify in Agda what we mean by a _linear map_.
+We'll take Conal's definition: a linear map is...
+
+> a function that distributes over tensor addition and scalar multiplication.
+
+That is:
+
+$$
+f : A \to B
+$$
+
+and:
+
+$$
+f (x \oplus y)  = f x \oplus f y
+$$
+
+$$
+f (s \otimes x) = s \otimes f x
+$$
+
+Right away, we've identified several necessities, in addition to those explicitly written above:
+
+1. The $$\oplus$$ operator must take two arguments of the same type and combine them, returning a result also within the type.
+
+1. Both types $$A$$ and $$B$$ _must_ have the $$\oplus$$ operator defined on them.
+
+1. The $$\otimes$$ operator must take a scalar as its first argument and some type as its second, returning a result value within that type.
+
+1. Both types $$A$$ and $$B$$ _must_ have the $$\otimes$$ operator defined on them.
+
+We can codify all this in Agda fairly easily:
+
+    {% highlight haskell linenos %}
+    data § : Set where
+      § : §
+
+    record Additive (A : Set) : Set where
+      infixl 6 _⊕_  -- Just matching associativity/priority of `_+_`.
+      field
+        _⊕_ : A → A → A
+
+    record Scalable (A : Set) : Set where
+      infixl 7 _⊛_  -- Just matching associativity/priority of `_*_`.
+      field
+        _⊛_ : § → A → A
+
+    record LinMap {A B : Set}
+                  ⦃_ : Additive A⦄ ⦃_ : Additive B⦄
+                  ⦃_ : Scalable A⦄ ⦃_ : Scalable B⦄
+                  : Set where
+      field
+        f      : A → B
+
+        adds   : ∀ (a b : A)
+                 ----------------------
+               → f (a ⊕ b) ≡ f a ⊕ f b
+
+        scales : ∀ (s : §) (a : A)
+                 --------------------
+               → f (s ⊛ a) ≡ s ⊛ f a
+    {% endhighlight %}
+
+## Additional Requirements
+
+Okay, let's see if what we've got so far is enough to attack the first isomorphism I'd like to prove: `A ⊸ § ≅ A`, i.e., a linear map from type `A` to scalar is isomorphic to the type `A` itself.
+Proving this isomorphism in Agda amounts to constructing the following record:
+
+    {% highlight haskell linenos %}
+    a⊸§≃a : ∀ {A : Set} ⦃_ : Additive A⦄ ⦃_ : Scalable A⦄
+             --------------------------------------------
+           → LinMap {A} {§} ≃ A
+    a⊸§≃a = record
+      { to   = λ { lm → ? }
+      ; from = λ { a  → ? }
+      ; from∘to = ?
+      ; to∘from = ?
+      }
+    {% endhighlight %}
+
+Now, how to implement `to` and `from`?
+
+If we required that `Additive` provide a _left identity_ for `⊕` then it would be enough to require that `A` be able to produce an iterable set of basis vectors.
+In that case, `to` could be implemented, via the following:
+
+{% highlight haskell linenos %}
+    to = λ lm → foldl (λ acc v → acc ⊕ (lm.f v) ⊛ v) id-⊕ vs
+{% endhighlight %}
+
+Implementing `from` is fairly simple, but does require that `A` have an inner product.
+In that case, we just build a `LinMap` record where `f` takes the dot product of its
+input w/ `a`.
+
+**Note:** My hunch is that I'm going to have to define some property of type `A` that relates the "inner product" to its "basis vectors", in order to tie all this together, but it's unclear to me what that property is, or needs to be.
+
+## First Proof Attempt
+
+Let's try adding the extra necessities identified above and attacking the proof.
+I'll note any additional properties, record fields, etc. needed to complete the proof, via Agda comments, for subsequent discussion.
+
 <pre class="Agda"><a id="5498" class="Keyword">module</a> <a id="5505" href="simple_essence.html" class="Module Operator">simple_essence</a> <a id="5520" class="Symbol">{</a><a id="5521" href="simple_essence.html#5521" class="Bound">s</a> <a id="5523" href="simple_essence.html#5523" class="Bound">a</a> <a id="5525" href="simple_essence.html#5525" class="Bound">b</a><a id="5526" class="Symbol">}</a> <a id="5528" class="Keyword">where</a>
 
 <a id="5535" class="Keyword">open</a> <a id="5540" class="Keyword">import</a> <a id="5547" href="Agda.Builtin.Sigma.html" class="Module">Agda.Builtin.Sigma</a>
