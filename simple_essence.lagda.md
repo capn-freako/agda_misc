@@ -72,7 +72,6 @@ Right away, we've identified several necessities, in addition to those explicitl
 
 We can codify all this in Agda fairly easily:
 
-{% highlight haskell linenos %}
     data § : Set where
       § : §
 
@@ -100,8 +99,6 @@ We can codify all this in Agda fairly easily:
         scales : ∀ (s : §) (a : A)
                  --------------------
                → f (s ⊛ a) ≡ s ⊛ f a
-
-{% endhighlight %}
 
 ## Additional Requirements
 
