@@ -139,6 +139,8 @@ input w/ `a`.
 Let's try adding the extra necessities identified above and attacking the proof.
 I'll note any additional properties, record fields, etc. needed to complete the proof, via Agda comments, for subsequent discussion.
 
+<link rel="stylesheet" type="text/css" href="Agda.css">
+
 ```agda
 module simple_essence {s a b} where
 
