@@ -1,1 +1,14 @@
+# See: https://github.com/barryclark/jekyll-now/blob/master/_config.yml
+name: Misc. Agda Musings
+description: Various Agda proofs of interesting tidbits.
+baseurl: "/agda_misc"
 theme: jekyll-theme-cayman
+# Jekyll 3 now only supports Kramdown for Markdown
+kramdown:
+  # Use GitHub flavored markdown, including triple backtick fenced code blocks
+  input: GFM
+  # Jekyll 3 and GitHub Pages now only support rouge for syntax highlighting
+  syntax_highlighter: rouge
+  syntax_highlighter_opts:
+    # Use existing pygments syntax highlighting css
+    css_class: 'highlight'
