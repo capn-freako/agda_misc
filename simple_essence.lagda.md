@@ -29,7 +29,7 @@ But, when I discussed this with Conal, he drew my attention to the paragraph imm
 
 > In particular, every linear map in $A ⊸ s$ has the form `dot u` for some `u :: A`,
 
-And that, therefore, since $a ⊸ s$ is isomorphic to $a$,  $(b ⊸ s) → (a ⊸ s)$ is indeed isomorphic to $b → a$.
+And that, therefore, since $a ⊸ s$ is isomorphic to $a$,  $(b ⊸ s) → (a ⊸ s)$ is indeed isomorphic to $$b → a$$.
 
 Well, that's very interesting, because now we've got something (the _continuation_) that is isomorphic to both $a → b$ and $b → a$.
 And, because the isomorphism relation is _transitive_, that means: $a → b ≅ b → a$!
