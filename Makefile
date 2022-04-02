@@ -9,20 +9,20 @@ PAGES_ROOT := docs
 BLD_DIR := $(PAGES_ROOT)/html
 AGDA_EXEC := agda
 AGDA_OPTS := --html --html-highlight=auto --html-dir=$(BLD_DIR)
-PANDOC_EXEC := pandoc
+#PANDOC_EXEC := pandoc
 #PANDOC_OPTS := -o $(BLD_DIR)/simple_essence.html -s --indented-code-classes=agda --toc --highlight-style=tango -c Agda.css
-PANDOC_OPTS := --indented-code-classes=agda --toc --highlight-style=tango -c Agda.css
+#PANDOC_OPTS := --indented-code-classes=agda --toc --highlight-style=tango -c Agda.css
 LAGDA_FILES := simple_essence.lagda.md
 #PANDOC_OUT := $(BLD_DIR)/$(LAGDA_FILES:.lagda.md=_pandoc.md)
-PANDOC_OUT := $(BLD_DIR)/$(LAGDA_FILES:.lagda.md=.html)
+#PANDOC_OUT := $(BLD_DIR)/$(LAGDA_FILES:.lagda.md=.html)
 #PANDOC_IN := $(PANDOC_OUT:_pandoc.md=.md)
 STATIC := $(PAGES_ROOT)/index.md
-TARGS := $(PANDOC_OUT)
+TARGS := $(BLD_DIR)/$(LAGDA_FILES:.lagda.md=.md)
 TAG_FILE := _pushed
 
 .PHONY: all
 
-.PRECIOUS: $(BLD_DIR)/$(LAGDA_FILES:.lagda.md=.md)
+#.PRECIOUS: $(BLD_DIR)/$(LAGDA_FILES:.lagda.md=.md)
 
 all: $(TAG_FILE)
 
@@ -32,8 +32,8 @@ $(TAG_FILE): $(TARGS) $(STATIC)
 	git commit -am 'Automatic build/push of capn-freako/agda_misc.' >> $@
 	git push >> $@
 
-%.html: %.md
-	$(PANDOC_EXEC) $(PANDOC_OPTS) -o $@ $<
+# %.html: %.md
+# 	$(PANDOC_EXEC) $(PANDOC_OPTS) -o $@ $<
 
 $(BLD_DIR)/%.md: %.lagda.md
 	$(AGDA_EXEC) $(AGDA_OPTS) $<
