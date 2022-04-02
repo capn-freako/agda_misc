@@ -72,6 +72,7 @@ Right away, we've identified several necessities, in addition to those explicitl
 
 We can codify all this in Agda fairly easily:
 
+    {% highlight haskell linenos %}
     data § : Set where
       § : §
 
@@ -99,13 +100,14 @@ We can codify all this in Agda fairly easily:
         scales : ∀ (s : §) (a : A)
                  --------------------
                → f (s ⊛ a) ≡ s ⊛ f a
+    {% endhighlight %}
 
 ## Additional Requirements
 
 Okay, let's see if what we've got so far is enough to attack the first isomorphism I'd like to prove: `A ⊸ § ≅ A`, i.e., a linear map from type `A` to scalar is isomorphic to the type `A` itself.
 Proving this isomorphism in Agda amounts to constructing the following record:
 
-{% highlight haskell linenos %}
+    {% highlight haskell linenos %}
     a⊸§≃a : ∀ {A : Set} ⦃_ : Additive A⦄ ⦃_ : Scalable A⦄
              --------------------------------------------
            → LinMap {A} {§} ≃ A
@@ -115,8 +117,7 @@ Proving this isomorphism in Agda amounts to constructing the following record:
       ; from∘to = ?
       ; to∘from = ?
       }
-
-{% endhighlight %}
+    {% endhighlight %}
 
 Now, how to implement `to` and `from`?
 

@@ -11,7 +11,7 @@ AGDA_EXEC := agda
 AGDA_OPTS := --html --html-highlight=auto --html-dir=$(BLD_DIR)
 PANDOC_EXEC := pandoc
 #PANDOC_OPTS := -o $(BLD_DIR)/simple_essence.html -s --indented-code-classes=agda --toc --highlight-style=tango -c Agda.css
-PANDOC_OPTS := --indented-code-classes=agda --toc --highlight-style=tango -c Agda.css
+PANDOC_OPTS := -s --indented-code-classes=agda --toc --highlight-style=tango -c Agda.css
 LAGDA_FILES := simple_essence.lagda.md
 #PANDOC_OUT := $(BLD_DIR)/$(LAGDA_FILES:.lagda.md=_pandoc.md)
 PANDOC_OUT := $(BLD_DIR)/$(LAGDA_FILES:.lagda.md=.html)
