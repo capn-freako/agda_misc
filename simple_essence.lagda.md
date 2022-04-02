@@ -16,24 +16,24 @@ In particular, I'm attempting to prove, using Agda, some of the isomorphisms tha
 
 In (re)reading Conal's paper, I noticed something that I thought was a typo:
 
-> The internal representation of $Cont^{s}_{(⊸)} \, a \, b$ is $(b ⊸ s) → (a ⊸ s)$, which is isomorphic to $b → a$.
+> The internal representation of $$Cont^{s}_{(⊸)} \, a \, b$$ is $$(b ⊸ s) → (a ⊸ s)$$, which is isomorphic to $$b → a$$.
 
 I thought for sure Conal meant to say:
 
-> ... isomorphic to $a → b$.
+> ... isomorphic to $$a → b$$.
 
 since the continuation must "know" how to get from `a` to `b`, in order to offer the type signature it does.
 (Can this be proven in Agda, perhaps by using a proof-by-contradiction approach?)
 
 But, when I discussed this with Conal, he drew my attention to the paragraph immediately above, in which he points out:
 
-> In particular, every linear map in $A ⊸ s$ has the form `dot u` for some `u :: A`,
+> In particular, every linear map in $$A ⊸ s$$ has the form `dot u` for some `u :: A`,
 
-And that, therefore, since $a ⊸ s$ is isomorphic to $a$,  $(b ⊸ s) → (a ⊸ s)$ is indeed isomorphic to $$b → a$$.
+And that, therefore, since $$a ⊸ s$$ is isomorphic to $$a$$,  $$(b ⊸ s) → (a ⊸ s)$$ is indeed isomorphic to $$b → a$$.
 
-Well, that's very interesting, because now we've got something (the _continuation_) that is isomorphic to both $a → b$ and $b → a$.
-And, because the isomorphism relation is _transitive_, that means: $a → b ≅ b → a$!
-Of course, this only holds in the special case where both types $a$ and $b$ have linear maps to the underlying scalar field.
+Well, that's very interesting, because now we've got something (the _continuation_) that is isomorphic to both $$a → b$$ and $$b → a$$.
+And, because the isomorphism relation is _transitive_, that means: $$a → b ≅ b → a$$!
+Of course, this only holds in the special case where both types $$a$$ and $$b$$ have linear maps to the underlying scalar field.
 And the existence of this duality under this very special condition is sort of the punchline of Conal's paper.
 Nevertheless, it struck me as quite powerful to be able to prove, at the outset and using Agda, that the duality must exist.
 
@@ -62,17 +62,17 @@ $$
 
 Right away, we've identified several necessities, in addition to those explicitly written above:
 
-1. The $\oplus$ operator must take two arguments of the same type and combine them, returning a result also within the type.
+1. The $$\oplus$$ operator must take two arguments of the same type and combine them, returning a result also within the type.
 
-1. Both types $A$ and $B$ _must_ have the $\oplus$ operator defined on them.
+1. Both types $$A$$ and $$B$$ _must_ have the $$\oplus$$ operator defined on them.
 
-1. The $\otimes$ operator must take a scalar as its first argument and some type as its second, returning a result value within that type.
+1. The $$\otimes$$ operator must take a scalar as its first argument and some type as its second, returning a result value within that type.
 
-1. Both types $A$ and $B$ _must_ have the $\otimes$ operator defined on them.
+1. Both types $$A$$ and $$B$$ _must_ have the $$\otimes$$ operator defined on them.
 
 We can codify all this in Agda fairly easily:
 
-{% highlight agda linenos %}
+{% highlight haskell linenos %}
     data § : Set where
       § : §
 
@@ -108,6 +108,7 @@ We can codify all this in Agda fairly easily:
 Okay, let's see if what we've got so far is enough to attack the first isomorphism I'd like to prove: `A ⊸ § ≅ A`, i.e., a linear map from type `A` to scalar is isomorphic to the type `A` itself.
 Proving this isomorphism in Agda amounts to constructing the following record:
 
+{% highlight haskell linenos %}
     a⊸§≃a : ∀ {A : Set} {{_ : Additive A}} {{_ : Scalable A}}
             -------------------------------------------------
           → LinMap {A} {§} ≃ A
@@ -118,12 +119,16 @@ Proving this isomorphism in Agda amounts to constructing the following record:
       ; to∘from = ?
       }
 
+{% endhighlight %}
+
 Now, how to implement `to` and `from`?
 
 If we required that `Additive` provide a _left identity_ for `⊕` then it would be enough to require that `A` be able to produce an iterable set of basis vectors.
 In that case, `to` could be implemented, via the following:
 
+{% highlight haskell linenos %}
     to = λ lm → foldl (λ acc v → acc ⊕ (lm.f v) ⊛ v) id-⊕ vs
+{% endhighlight %}
 
 Implementing `from` is fairly simple, but does require that `A` have an inner product.
 In that case, we just build a `LinMap` record where `f` takes the dot product of its
