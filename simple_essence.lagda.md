@@ -87,8 +87,8 @@ We can codify all this in Agda fairly easily:
         _⊛_ : § → A → A
 
     record LinMap {A B : Set}
-                  {{_ : Additive A}} {{_ : Additive B}}
-                  {{_ : Scalable A}} {{_ : Scalable B}}
+                  ⦃_ : Additive A⦄ ⦃_ : Additive B⦄
+                  ⦃_ : Scalable A⦄ ⦃_ : Scalable B⦄
                   : Set where
       field
         f      : A → B
@@ -109,9 +109,9 @@ Okay, let's see if what we've got so far is enough to attack the first isomorphi
 Proving this isomorphism in Agda amounts to constructing the following record:
 
 {% highlight haskell linenos %}
-    a⊸§≃a : ∀ {A : Set} {{_ : Additive A}} {{_ : Scalable A}}
-            -------------------------------------------------
-          → LinMap {A} {§} ≃ A
+    a⊸§≃a : ∀ {A : Set} ⦃_ : Additive A⦄ ⦃_ : Scalable A⦄
+             --------------------------------------------
+           → LinMap {A} {§} ≃ A
     a⊸§≃a = record
       { to   = λ { lm → ? }
       ; from = λ { a  → ? }
