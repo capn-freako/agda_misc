@@ -7,7 +7,7 @@ title: 'Agda Doodlings, re: Conal`s _Simple Essence of Automatic Differentiation
 # Agda Doodlings, re: Conal's "Simple Essence of Automatic Differentiation"
 
 by: David Banas <capn.freako@gmail.com>  
-on: February 19, 2022
+on: April 1, 2022
 
 In this [literate Agda](https://agda.readthedocs.io/en/v2.6.2.1/tools/literate-programming.html#literate-markdown) file I'm exploring some of the ideas written about by Conal Elliott in his paper: _The Simple Essence of Automatic Differentiation_.
 In particular, I'm attempting to prove, using Agda, some of the isomorphisms that Conal reveals in that paper.
