@@ -1,12 +1,10 @@
 ---
-format: 'markdown'
+format: 'markdown+latex'
 title: 'Agda Doodlings, re: Conal`s _Simple Essence of Automatic Differentiation_'
+author: 'David Banas <capn.freako@gmail.com>'
+date: 2022-04-02
+copy: Copyright (c) 2022 David Banas; all rights reserved World wide.
 ...
-
-# Agda Doodlings, re: Conal's "Simple Essence of Automatic Differentiation"
-
-by: David Banas <capn.freako@gmail.com>  
-on: February 19, 2022
 
 In this [literate Agda](https://agda.readthedocs.io/en/v2.6.2.1/tools/literate-programming.html#literate-markdown) file I'm exploring some of the ideas written about by Conal Elliott in his paper: _The Simple Essence of Automatic Differentiation_.
 In particular, I'm attempting to prove, using Agda, some of the isomorphisms that Conal reveals in that paper.
@@ -71,6 +69,7 @@ Right away, we've identified several necessities, in addition to those explicitl
 
 We can codify all this in Agda fairly easily:
 
+{% highlight agda linenos %}
     data § : Set where
       § : §
 
@@ -90,7 +89,7 @@ We can codify all this in Agda fairly easily:
                   : Set where
       field
         f      : A → B
-        
+
         adds   : ∀ (a b : A)
                  ----------------------
                → f (a ⊕ b) ≡ f a ⊕ f b
@@ -98,6 +97,8 @@ We can codify all this in Agda fairly easily:
         scales : ∀ (s : §) (a : A)
                  --------------------
                → f (s ⊛ a) ≡ s ⊛ f a
+
+{% endhighlight %}
 
 ## Additional Requirements
 
@@ -198,7 +199,7 @@ record LinMap (A : Set a) (B : Set a)
   constructor mkLM
   field
     f      : A → B
-    
+
     adds   : ∀ {a b : A}
              ---------------------
            → f (a ⊕ b) ≡ f a ⊕ f b
@@ -312,4 +313,3 @@ a⊸§↔a {A} =
 -- a⊸§⇔a {A} = mk⇔ a⊸§→a a⊸§←a
 
 ```
-
