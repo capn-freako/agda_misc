@@ -175,7 +175,7 @@ record Additive (A : Set a) : Set ℓ where
            -----------
          → id⊕ ⊕ a ≡ a
     -- assoc-⊕ : (x y z : A) → (x ⊕ y) ⊕ z ≡ x ⊕ (y ⊕ z)
-open Additive {{ ... }}
+open Additive ⦃ ... ⦄
 instance
   AdditiveScalar : Additive §
   AdditiveScalar = record
@@ -193,7 +193,7 @@ record Scalable (A : Set a) : Set ℓ where
   infixl 7 _⊛_  -- Just matching associativity/priority of `_*_`.
   field
     _⊛_ : § → A → A
-open Scalable {{ ... }}
+open Scalable ⦃ ... ⦄
 instance
   ScalableScalar : Scalable §
   ScalableScalar = record
@@ -201,8 +201,8 @@ instance
     }
 
 record LinMap (A : Set a) (B : Set a)
-              {{_ : Additive A}} {{_ : Additive B}}
-              {{_ : Scalable A}} {{_ : Scalable B}}
+              ⦃ _ : Additive A ⦄ ⦃ _ : Additive B ⦄
+              ⦃ _ : Scalable A ⦄ ⦃ _ : Scalable B ⦄
               : Set ℓ where
   constructor mkLM
   field
@@ -215,21 +215,21 @@ record LinMap (A : Set a) (B : Set a)
     scales : ∀ {s : §} {a : A}
              -------------------
            → f (s ⊛ a) ≡ s ⊛ f a
-open LinMap {{ ... }}
+open LinMap ⦃ ... ⦄
 
 -- As per Conal's advice:
 -- ⊸≈ = isEquivalence LinMap.f Eq.isEquivalence
 postulate
   ⊸≡ : {A B : Set a}
-       {{_ : Additive A}} {{_ : Additive B}}
-       {{_ : Scalable A}} {{_ : Scalable B}}
+       ⦃ _ : Additive A ⦄ ⦃ _ : Additive B ⦄
+       ⦃ _ : Scalable A ⦄ ⦃ _ : Scalable B ⦄
        {lm₁ lm₂ : LinMap A B}
      → LinMap.f lm₁ ≡ LinMap.f lm₂
        ---------------------------
      → lm₁ ≡ lm₂
 
 record VectorSpace (A : Set a)
-                   {{_ : Additive A}} {{_ : Scalable A}}
+                   ⦃ _ : Additive A ⦄ ⦃ _ : Scalable A ⦄
                    : Set ℓ where
   field
     -- As noted above, seems like I should have to define some properties relating these two.
@@ -248,19 +248,19 @@ record VectorSpace (A : Set a)
                 → {x : A}
                   ----------------------------------------------------------
                 → (foldl (λ acc v → acc ⊕ (f v) ⊛ v) id⊕ basisSet) · x ≡ f x
-open VectorSpace {{ ... }}
+open VectorSpace ⦃ ... ⦄
 
 -- The Isomorphism I'm trying to prove.
 a⊸§→a : {A : Set a}
-        {{_ : Additive A}} {{_ : Scalable A}}
-        {{_ : VectorSpace A}}
+        ⦃ _ : Additive A ⦄ ⦃ _ : Scalable A ⦄
+        ⦃ _ : VectorSpace A ⦄
         -------------------------------------
       → LinMap A § → A
 a⊸§→a = λ { lm → foldl (λ acc v → acc ⊕ (LinMap.f lm v) ⊛ v) id⊕ basisSet }
 
 a⊸§←a : {A : Set a}
-        {{_ : Additive A}} {{_ : Scalable A}}
-        {{_ : VectorSpace A}}
+        ⦃ _ : Additive A ⦄ ⦃ _ : Scalable A ⦄
+        ⦃ _ : VectorSpace A ⦄
         -------------------------------------
       → A → LinMap A §
 a⊸§←a = λ { a → mkLM (a ·_) ·-distrib-⊕ ·-comm-⊛ }
@@ -268,7 +268,7 @@ a⊸§←a = λ { a → mkLM (a ·_) ·-distrib-⊕ ·-comm-⊛ }
 -- Danger, Will Robinson!
 postulate
   x·z≡y·z→x≡y : {A : Set a}
-                {{_ : Additive A}} {{_ : Scalable A}} {{_ : VectorSpace A}}
+                ⦃ _ : Additive A ⦄ ⦃ _ : Scalable A ⦄ ⦃ _ : VectorSpace A ⦄
                 {x y : A}
               → (∀ {z : A} → x · z ≡ y · z)
                 -----------------------------------------------------------
@@ -278,8 +278,8 @@ postulate
 -- x·z≡y·z→x≡y x·z≡y·z = {!!}
 
 a⊸§↔a : {A : Set a}
-        {{_ : Additive A}} {{_ : Scalable A}}
-        {{_ : VectorSpace A}}
+        ⦃ _ : Additive A ⦄ ⦃ _ : Scalable A ⦄
+        ⦃ _ : VectorSpace A ⦄
         -------------------------------------
       → (LinMap A §) ↔ A
 a⊸§↔a {A} =
@@ -314,8 +314,8 @@ a⊸§↔a {A} =
 -- I think that I didn't fully grok the hint he was giving me.
 --
 -- a⊸§⇔a : {A : Set a}
---         {{_ : Additive A}} {{_ : Scalable A}}
---         {{_ : VectorSpace A}}
+--         ⦃_ : Additive A⦄ ⦃_ : Scalable A⦄
+--         ⦃_ : VectorSpace A⦄
 --         -------------------------------------
 --       → (LinMap A §) ⇔ A
 -- a⊸§⇔a {A} = mk⇔ a⊸§→a a⊸§←a
