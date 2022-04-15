@@ -9,6 +9,8 @@ copy: Copyright (c) 2022 David Banas; all rights reserved World wide.
 
 {% include mathjax.html %}
 
+<link rel="stylesheet" type="text/css" href="Agda.css">
+
 In this [literate Agda](https://agda.readthedocs.io/en/v2.6.2.1/tools/literate-programming.html#literate-markdown) file I'm exploring some of the ideas written about by Conal Elliott in his paper: _The Simple Essence of Automatic Differentiation_.
 In particular, I'm attempting to prove, using Agda, some of the isomorphisms that Conal reveals in that paper.
 
@@ -139,17 +141,16 @@ input w/ `a`.
 Let's try adding the extra necessities identified above and attacking the proof.
 I'll note any additional properties, record fields, etc. needed to complete the proof, via Agda comments, for subsequent discussion.
 
-<link rel="stylesheet" type="text/css" href="Agda.css">
-
 ```agda
 module simple_essence {s a b} where
 
 open import Agda.Builtin.Sigma
+open import Algebra                            using (IsRing)
 open import Axiom.Extensionality.Propositional using (Extensionality)
 open import Data.Float
 open import Data.List
 open import Function using (_↔_; mk↔; id)
-open import Level using (Level; _⊔_)
+open import Level    using (Level; _⊔_)
 
 import Relation.Binary.PropositionalEquality as Eq
 open Eq using (_≡_; refl; trans; sym; cong; cong₂; cong-app; subst)
@@ -163,43 +164,44 @@ postulate
 ℓ : Level
 ℓ = s ⊔ a ⊔ b
 
-data § : Set a where
-  S : Float → §
+-- data § : Set a where
+--   S : Float → §
 
-record Additive (A : Set a) : Set ℓ where
-  infixl 6 _⊕_  -- Just matching associativity/priority of `_+_`.
-  field
-    id⊕  : A
-    _⊕_  : A → A → A
-    id-⊕ : (a : A)
-           -----------
-         → id⊕ ⊕ a ≡ a
-    -- assoc-⊕ : (x y z : A) → (x ⊕ y) ⊕ z ≡ x ⊕ (y ⊕ z)
-open Additive ⦃ ... ⦄
-instance
-  AdditiveScalar : Additive §
-  AdditiveScalar = record
-    { id⊕  = S 0.0
-    ; _⊕_  = λ {(S x) (S y) → S (x + y)}
-    ; id-⊕ = λ { (S x) → begin
-                           S (0.0 + x)
-                         ≡⟨ cong S id+ ⟩
-                           S x
-                         ∎
-               }
-    }
+-- record Additive (A : Set a) : Set ℓ where
+--   infixl 6 _⊕_  -- Just matching associativity/priority of `_+_`.
+--   field
+--     id⊕  : A
+--     _⊕_  : A → A → A
+--     id-⊕ : (a : A)
+--            -----------
+--          → id⊕ ⊕ a ≡ a
+--     -- assoc-⊕ : (x y z : A) → (x ⊕ y) ⊕ z ≡ x ⊕ (y ⊕ z)
+-- open Additive ⦃ ... ⦄
+-- instance
+--   AdditiveScalar : Additive §
+--   AdditiveScalar = record
+--     { id⊕  = S 0.0
+--     ; _⊕_  = λ {(S x) (S y) → S (x + y)}
+--     ; id-⊕ = λ { (S x) → begin
+--                            S (0.0 + x)
+--                          ≡⟨ cong S id+ ⟩
+--                            S x
+--                          ∎
+--                }
+--     }
 
-record Scalable (A : Set a) : Set ℓ where
-  infixl 7 _⊛_  -- Just matching associativity/priority of `_*_`.
-  field
-    _⊛_ : § → A → A
-open Scalable ⦃ ... ⦄
-instance
-  ScalableScalar : Scalable §
-  ScalableScalar = record
-    { _⊛_ = λ {(S x) (S y) → S (x * y)}
-    }
+-- record Scalable (A : Set a) : Set ℓ where
+--   infixl 7 _⊛_  -- Just matching associativity/priority of `_*_`.
+--   field
+--     _⊛_ : § → A → A
+-- open Scalable ⦃ ... ⦄
+-- instance
+--   ScalableScalar : Scalable §
+--   ScalableScalar = record
+--     { _⊛_ = λ {(S x) (S y) → S (x * y)}
+--     }
 
+record § (S : Set s)
 record LinMap (A : Set a) (B : Set a)
               ⦃ _ : Additive A ⦄ ⦃ _ : Additive B ⦄
               ⦃ _ : Scalable A ⦄ ⦃ _ : Scalable B ⦄
