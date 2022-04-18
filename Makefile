@@ -27,3 +27,6 @@ $(TAG_FILE): $(TARGS) $(STATIC)
 
 $(BLD_DIR)/%.md: %.lagda.md
 	$(AGDA_EXEC) $(AGDA_OPTS) $<
+
+clean:
+	rm $(BLD_DIR)/*

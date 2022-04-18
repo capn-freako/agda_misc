@@ -9,7 +9,6 @@ toc: true
 ...
 
 {% include mathjax.html %}
-{% toc %}
 
 <link rel="stylesheet" type="text/css" href="Agda.css">
 
