@@ -10,7 +10,7 @@ BLD_DIR := $(PAGES_ROOT)/html
 AGDA_EXEC := agda
 AGDA_OPTS := --html --html-highlight=auto --html-dir=$(BLD_DIR)
 LAGDA_FILES := simple_essence.lagda.md
-STATIC := $(PAGES_ROOT)/index.md
+STATIC := $(PAGES_ROOT)/index.md $(PAGES_ROOT)/_config.yml
 TARGS := $(BLD_DIR)/$(LAGDA_FILES:.lagda.md=.md)
 TAG_FILE := _pushed
 
