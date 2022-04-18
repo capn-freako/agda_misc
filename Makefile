@@ -21,6 +21,7 @@ all: $(TAG_FILE)
 $(TAG_FILE): $(TARGS) $(STATIC)
 	@echo "DO NOT DELETE ME!" > $@
 	@echo "" >> $@
+	git add $(BLD_DIR) >> $@
 	git commit -am 'Automatic build/push of capn-freako/agda_misc.' >> $@
 	git push >> $@
 

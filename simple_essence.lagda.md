@@ -5,6 +5,7 @@ description: Agda proofs of some isomorphisms revealed by Conal in his paper.
 author: 'David Banas <capn.freako@gmail.com>'
 date: 2022-04-02
 copy: Copyright (c) 2022 David Banas; all rights reserved World wide.
+toc: true
 ...
 
 {% include mathjax.html %}
