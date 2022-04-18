@@ -256,13 +256,13 @@ In its most general sense, a "vector space" provides a function that takes some 
 We add a few extras, useful when doing _linear algebra_:
 
 Vector Addition
-    : We can "add" two vectors, producing a third.
+:   We can "add" two vectors, producing a third.
 
 Scalar Multiplication
-    : We can "scale" a vector by an element of the carrier type, producing another vector.
+:   We can "scale" a vector by an element of the carrier type, producing another vector.
 
 Inner Product
-    : We can combine two vectors, producing a single value of the carrier type.
+:   We can combine two vectors, producing a single value of the carrier type.
 
 **Note:** The remaining definitions in the code below were the result of attempting to solve the first isomorphism.
 

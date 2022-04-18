@@ -250,233 +250,233 @@ In its most general sense, a "vector space" provides a function that takes some 
 We add a few extras, useful when doing _linear algebra_:
 
 Vector Addition
-    : We can "add" two vectors, producing a third.
+:   We can "add" two vectors, producing a third.
 
 Scalar Multiplication
-    : We can "scale" a vector by an element of the carrier type, producing another vector.
+:   We can "scale" a vector by an element of the carrier type, producing another vector.
 
 Inner Product
-    : We can combine two vectors, producing a single value of the carrier type.
+:   We can combine two vectors, producing a single value of the carrier type.
 
 **Note:** The remaining definitions in the code below were the result of attempting to solve the first isomorphism.
 
 **Note:** We use `Ring`, as opposed to a `SemiRing`, because that gives us _subtraction_, which allows us to prove _injectivity_ of linear maps, which in turn allows us to replace the `x·z≡y·z→x≡y` _postulate_ with an equivalent _proof_.
 
-<pre class="Agda"><a id="9576" class="Keyword">record</a> <a id="VectorSpace"></a><a id="9583" href="simple_essence.html#9583" class="Record">VectorSpace</a>
-  <a id="9597" class="Symbol">(</a><a id="9598" href="simple_essence.html#9598" class="Bound">T</a> <a id="9600" class="Symbol">:</a> <a id="9602" class="PrimitiveType">Set</a> <a id="9606" href="simple_essence.html#6402" class="Generalizable">ℓ₁</a><a id="9608" class="Symbol">)</a> <a id="9610" class="Symbol">(</a><a id="9611" href="simple_essence.html#9611" class="Bound">A</a> <a id="9613" class="Symbol">:</a> <a id="9615" class="PrimitiveType">Set</a> <a id="9619" href="simple_essence.html#6402" class="Generalizable">ℓ₁</a><a id="9621" class="Symbol">)</a>
-  <a id="9625" class="Symbol">⦃</a> <a id="9627" href="simple_essence.html#9627" class="Bound">_</a> <a id="9629" class="Symbol">:</a> <a id="9631" href="simple_essence.html#7186" class="Record">Ring</a> <a id="9636" href="simple_essence.html#9598" class="Bound">T</a> <a id="9638" class="Symbol">⦄</a> <a id="9640" class="Symbol">⦃</a> <a id="9642" href="simple_essence.html#9642" class="Bound">_</a> <a id="9644" class="Symbol">:</a> <a id="9646" href="simple_essence.html#7186" class="Record">Ring</a> <a id="9651" href="simple_essence.html#9611" class="Bound">A</a> <a id="9653" class="Symbol">⦄</a> <a id="9655" class="Symbol">⦃</a> <a id="9657" href="simple_essence.html#9657" class="Bound">_</a> <a id="9659" class="Symbol">:</a> <a id="9661" href="simple_essence.html#7045" class="Record">Scalable</a> <a id="9670" href="simple_essence.html#9598" class="Bound">T</a> <a id="9672" href="simple_essence.html#9611" class="Bound">A</a> <a id="9674" class="Symbol">⦄</a>
-  <a id="9678" class="Symbol">:</a> <a id="9680" class="PrimitiveType">Set</a> <a id="9684" class="Symbol">(</a><a id="9685" href="Agda.Primitive.html#606" class="Primitive">Level.suc</a> <a id="9695" href="simple_essence.html#9606" class="Bound">ℓ₁</a><a id="9697" class="Symbol">)</a> <a id="9699" class="Keyword">where</a>
-  <a id="9707" class="Keyword">infix</a>  <a id="9714" class="Number">7</a> <a id="9716" href="simple_essence.html#9798" class="Field Operator">_⊙_</a>
-  <a id="9722" class="Keyword">field</a>
-    <a id="VectorSpace.I"></a><a id="9732" href="simple_essence.html#9732" class="Field">I</a>     <a id="9738" class="Symbol">:</a> <a id="9740" class="PrimitiveType">Set</a> <a id="9744" href="simple_essence.html#9606" class="Bound">ℓ₁</a>
-    <a id="VectorSpace.index"></a><a id="9751" href="simple_essence.html#9751" class="Field">index</a> <a id="9757" class="Symbol">:</a> <a id="9759" href="simple_essence.html#9732" class="Field">I</a> <a id="9761" class="Symbol">→</a> <a id="9763" href="simple_essence.html#9598" class="Bound">T</a> <a id="9765" class="Symbol">→</a> <a id="9767" href="simple_essence.html#9611" class="Bound">A</a>
-    <a id="VectorSpace.basisSet"></a><a id="9773" href="simple_essence.html#9773" class="Field">basisSet</a>    <a id="9785" class="Symbol">:</a> <a id="9787" href="Agda.Builtin.List.html#148" class="Datatype">List</a> <a id="9792" href="simple_essence.html#9598" class="Bound">T</a>
-    <a id="VectorSpace._⊙_"></a><a id="9798" href="simple_essence.html#9798" class="Field Operator">_⊙_</a>         <a id="9810" class="Symbol">:</a> <a id="9812" href="simple_essence.html#9598" class="Bound">T</a> <a id="9814" class="Symbol">→</a> <a id="9816" href="simple_essence.html#9598" class="Bound">T</a> <a id="9818" class="Symbol">→</a> <a id="9820" href="simple_essence.html#9611" class="Bound">A</a>
-    <a id="9826" class="Comment">-- Added while solving the isomorphism below.</a>
-    <a id="VectorSpace.⊙-distrib-+"></a><a id="9876" href="simple_essence.html#9876" class="Field">⊙-distrib-+</a> <a id="9888" class="Symbol">:</a> <a id="9890" class="Symbol">∀</a> <a id="9892" class="Symbol">{</a><a id="9893" href="simple_essence.html#9893" class="Bound">a</a> <a id="9895" href="simple_essence.html#9895" class="Bound">b</a> <a id="9897" href="simple_essence.html#9897" class="Bound">c</a> <a id="9899" class="Symbol">:</a> <a id="9901" href="simple_essence.html#9598" class="Bound">T</a><a id="9902" class="Symbol">}</a>
-                  <a id="9922" class="Comment">-------------------------------</a>
-               <a id="9969" class="Symbol">→</a> <a id="9971" href="simple_essence.html#9893" class="Bound">a</a> <a id="9973" href="simple_essence.html#9798" class="Field Operator">⊙</a> <a id="9975" class="Symbol">(</a><a id="9976" href="simple_essence.html#9895" class="Bound">b</a> <a id="9978" href="simple_essence.html#7287" class="Field Operator">+</a> <a id="9980" href="simple_essence.html#9897" class="Bound">c</a><a id="9981" class="Symbol">)</a> <a id="9983" href="Agda.Builtin.Equality.html#151" class="Datatype Operator">≡</a> <a id="9985" class="Symbol">(</a><a id="9986" href="simple_essence.html#9893" class="Bound">a</a> <a id="9988" href="simple_essence.html#9798" class="Field Operator">⊙</a> <a id="9990" href="simple_essence.html#9895" class="Bound">b</a><a id="9991" class="Symbol">)</a> <a id="9993" href="simple_essence.html#7287" class="Field Operator">+</a> <a id="9995" class="Symbol">(</a><a id="9996" href="simple_essence.html#9893" class="Bound">a</a> <a id="9998" href="simple_essence.html#9798" class="Field Operator">⊙</a> <a id="10000" href="simple_essence.html#9897" class="Bound">c</a><a id="10001" class="Symbol">)</a>
-    <a id="VectorSpace.⊙-comm-·"></a><a id="10007" href="simple_essence.html#10007" class="Field">⊙-comm-·</a>    <a id="10019" class="Symbol">:</a> <a id="10021" class="Symbol">∀</a> <a id="10023" class="Symbol">{</a><a id="10024" href="simple_essence.html#10024" class="Bound">s</a> <a id="10026" class="Symbol">:</a> <a id="10028" href="simple_essence.html#9611" class="Bound">A</a><a id="10029" class="Symbol">}</a> <a id="10031" class="Symbol">{</a><a id="10032" href="simple_essence.html#10032" class="Bound">a</a> <a id="10034" href="simple_essence.html#10034" class="Bound">b</a> <a id="10036" class="Symbol">:</a> <a id="10038" href="simple_essence.html#9598" class="Bound">T</a><a id="10039" class="Symbol">}</a>
-                  <a id="10059" class="Comment">-------------------------</a>
-               <a id="10100" class="Symbol">→</a> <a id="10102" href="simple_essence.html#10032" class="Bound">a</a> <a id="10104" href="simple_essence.html#9798" class="Field Operator">⊙</a> <a id="10106" class="Symbol">(</a><a id="10107" href="simple_essence.html#10024" class="Bound">s</a> <a id="10109" href="simple_essence.html#7133" class="Field Operator">·</a> <a id="10111" href="simple_essence.html#10034" class="Bound">b</a><a id="10112" class="Symbol">)</a> <a id="10114" href="Agda.Builtin.Equality.html#151" class="Datatype Operator">≡</a> <a id="10116" href="simple_essence.html#10024" class="Bound">s</a> <a id="10118" href="simple_essence.html#7133" class="Field Operator">·</a> <a id="10120" class="Symbol">(</a><a id="10121" href="simple_essence.html#10032" class="Bound">a</a> <a id="10123" href="simple_essence.html#9798" class="Field Operator">⊙</a> <a id="10125" href="simple_essence.html#10034" class="Bound">b</a><a id="10126" class="Symbol">)</a>
-    <a id="VectorSpace.orthonormal"></a><a id="10132" href="simple_essence.html#10132" class="Field">orthonormal</a> <a id="10144" class="Symbol">:</a> <a id="10146" class="Symbol">∀</a> <a id="10148" class="Symbol">{</a><a id="10149" href="simple_essence.html#10149" class="Bound">f</a> <a id="10151" class="Symbol">:</a> <a id="10153" href="simple_essence.html#9598" class="Bound">T</a> <a id="10155" class="Symbol">→</a> <a id="10157" href="simple_essence.html#9611" class="Bound">A</a><a id="10158" class="Symbol">}</a>
-               <a id="10175" class="Symbol">→</a> <a id="10177" class="Symbol">{</a><a id="10178" href="simple_essence.html#10178" class="Bound">x</a> <a id="10180" class="Symbol">:</a> <a id="10182" href="simple_essence.html#9598" class="Bound">T</a><a id="10183" class="Symbol">}</a>
-                  <a id="10203" class="Comment">------------------------------------</a>
-               <a id="10255" class="Symbol">→</a> <a id="10257" class="Symbol">(</a> <a id="10259" href="Data.List.Base.html#3726" class="Function">foldl</a> <a id="10265" class="Symbol">(λ</a> <a id="10268" href="simple_essence.html#10268" class="Bound">acc</a> <a id="10272" href="simple_essence.html#10272" class="Bound">v</a> <a id="10274" class="Symbol">→</a> <a id="10276" href="simple_essence.html#10268" class="Bound">acc</a> <a id="10280" href="simple_essence.html#7287" class="Field Operator">+</a> <a id="10282" class="Symbol">(</a><a id="10283" href="simple_essence.html#10149" class="Bound">f</a> <a id="10285" href="simple_essence.html#10272" class="Bound">v</a><a id="10286" class="Symbol">)</a> <a id="10288" href="simple_essence.html#7133" class="Field Operator">·</a> <a id="10290" href="simple_essence.html#10272" class="Bound">v</a><a id="10291" class="Symbol">)</a>
-                          <a id="10319" href="simple_essence.html#7343" class="Field">𝟘</a> <a id="10321" href="simple_essence.html#9773" class="Field">basisSet</a>
-                  <a id="10348" class="Symbol">)</a> <a id="10350" href="simple_essence.html#9798" class="Field Operator">⊙</a> <a id="10352" href="simple_essence.html#10178" class="Bound">x</a> <a id="10354" href="Agda.Builtin.Equality.html#151" class="Datatype Operator">≡</a> <a id="10356" href="simple_essence.html#10149" class="Bound">f</a> <a id="10358" href="simple_essence.html#10178" class="Bound">x</a>
-<a id="10360" class="Keyword">open</a> <a id="10365" href="simple_essence.html#9583" class="Module">VectorSpace</a> <a id="10377" class="Symbol">⦃</a> <a id="10379" class="Symbol">...</a> <a id="10383" class="Symbol">⦄</a> <a id="10385" class="Keyword">public</a>
+<pre class="Agda"><a id="9570" class="Keyword">record</a> <a id="VectorSpace"></a><a id="9577" href="simple_essence.html#9577" class="Record">VectorSpace</a>
+  <a id="9591" class="Symbol">(</a><a id="9592" href="simple_essence.html#9592" class="Bound">T</a> <a id="9594" class="Symbol">:</a> <a id="9596" class="PrimitiveType">Set</a> <a id="9600" href="simple_essence.html#6402" class="Generalizable">ℓ₁</a><a id="9602" class="Symbol">)</a> <a id="9604" class="Symbol">(</a><a id="9605" href="simple_essence.html#9605" class="Bound">A</a> <a id="9607" class="Symbol">:</a> <a id="9609" class="PrimitiveType">Set</a> <a id="9613" href="simple_essence.html#6402" class="Generalizable">ℓ₁</a><a id="9615" class="Symbol">)</a>
+  <a id="9619" class="Symbol">⦃</a> <a id="9621" href="simple_essence.html#9621" class="Bound">_</a> <a id="9623" class="Symbol">:</a> <a id="9625" href="simple_essence.html#7186" class="Record">Ring</a> <a id="9630" href="simple_essence.html#9592" class="Bound">T</a> <a id="9632" class="Symbol">⦄</a> <a id="9634" class="Symbol">⦃</a> <a id="9636" href="simple_essence.html#9636" class="Bound">_</a> <a id="9638" class="Symbol">:</a> <a id="9640" href="simple_essence.html#7186" class="Record">Ring</a> <a id="9645" href="simple_essence.html#9605" class="Bound">A</a> <a id="9647" class="Symbol">⦄</a> <a id="9649" class="Symbol">⦃</a> <a id="9651" href="simple_essence.html#9651" class="Bound">_</a> <a id="9653" class="Symbol">:</a> <a id="9655" href="simple_essence.html#7045" class="Record">Scalable</a> <a id="9664" href="simple_essence.html#9592" class="Bound">T</a> <a id="9666" href="simple_essence.html#9605" class="Bound">A</a> <a id="9668" class="Symbol">⦄</a>
+  <a id="9672" class="Symbol">:</a> <a id="9674" class="PrimitiveType">Set</a> <a id="9678" class="Symbol">(</a><a id="9679" href="Agda.Primitive.html#606" class="Primitive">Level.suc</a> <a id="9689" href="simple_essence.html#9600" class="Bound">ℓ₁</a><a id="9691" class="Symbol">)</a> <a id="9693" class="Keyword">where</a>
+  <a id="9701" class="Keyword">infix</a>  <a id="9708" class="Number">7</a> <a id="9710" href="simple_essence.html#9792" class="Field Operator">_⊙_</a>
+  <a id="9716" class="Keyword">field</a>
+    <a id="VectorSpace.I"></a><a id="9726" href="simple_essence.html#9726" class="Field">I</a>     <a id="9732" class="Symbol">:</a> <a id="9734" class="PrimitiveType">Set</a> <a id="9738" href="simple_essence.html#9600" class="Bound">ℓ₁</a>
+    <a id="VectorSpace.index"></a><a id="9745" href="simple_essence.html#9745" class="Field">index</a> <a id="9751" class="Symbol">:</a> <a id="9753" href="simple_essence.html#9726" class="Field">I</a> <a id="9755" class="Symbol">→</a> <a id="9757" href="simple_essence.html#9592" class="Bound">T</a> <a id="9759" class="Symbol">→</a> <a id="9761" href="simple_essence.html#9605" class="Bound">A</a>
+    <a id="VectorSpace.basisSet"></a><a id="9767" href="simple_essence.html#9767" class="Field">basisSet</a>    <a id="9779" class="Symbol">:</a> <a id="9781" href="Agda.Builtin.List.html#148" class="Datatype">List</a> <a id="9786" href="simple_essence.html#9592" class="Bound">T</a>
+    <a id="VectorSpace._⊙_"></a><a id="9792" href="simple_essence.html#9792" class="Field Operator">_⊙_</a>         <a id="9804" class="Symbol">:</a> <a id="9806" href="simple_essence.html#9592" class="Bound">T</a> <a id="9808" class="Symbol">→</a> <a id="9810" href="simple_essence.html#9592" class="Bound">T</a> <a id="9812" class="Symbol">→</a> <a id="9814" href="simple_essence.html#9605" class="Bound">A</a>
+    <a id="9820" class="Comment">-- Added while solving the isomorphism below.</a>
+    <a id="VectorSpace.⊙-distrib-+"></a><a id="9870" href="simple_essence.html#9870" class="Field">⊙-distrib-+</a> <a id="9882" class="Symbol">:</a> <a id="9884" class="Symbol">∀</a> <a id="9886" class="Symbol">{</a><a id="9887" href="simple_essence.html#9887" class="Bound">a</a> <a id="9889" href="simple_essence.html#9889" class="Bound">b</a> <a id="9891" href="simple_essence.html#9891" class="Bound">c</a> <a id="9893" class="Symbol">:</a> <a id="9895" href="simple_essence.html#9592" class="Bound">T</a><a id="9896" class="Symbol">}</a>
+                  <a id="9916" class="Comment">-------------------------------</a>
+               <a id="9963" class="Symbol">→</a> <a id="9965" href="simple_essence.html#9887" class="Bound">a</a> <a id="9967" href="simple_essence.html#9792" class="Field Operator">⊙</a> <a id="9969" class="Symbol">(</a><a id="9970" href="simple_essence.html#9889" class="Bound">b</a> <a id="9972" href="simple_essence.html#7287" class="Field Operator">+</a> <a id="9974" href="simple_essence.html#9891" class="Bound">c</a><a id="9975" class="Symbol">)</a> <a id="9977" href="Agda.Builtin.Equality.html#151" class="Datatype Operator">≡</a> <a id="9979" class="Symbol">(</a><a id="9980" href="simple_essence.html#9887" class="Bound">a</a> <a id="9982" href="simple_essence.html#9792" class="Field Operator">⊙</a> <a id="9984" href="simple_essence.html#9889" class="Bound">b</a><a id="9985" class="Symbol">)</a> <a id="9987" href="simple_essence.html#7287" class="Field Operator">+</a> <a id="9989" class="Symbol">(</a><a id="9990" href="simple_essence.html#9887" class="Bound">a</a> <a id="9992" href="simple_essence.html#9792" class="Field Operator">⊙</a> <a id="9994" href="simple_essence.html#9891" class="Bound">c</a><a id="9995" class="Symbol">)</a>
+    <a id="VectorSpace.⊙-comm-·"></a><a id="10001" href="simple_essence.html#10001" class="Field">⊙-comm-·</a>    <a id="10013" class="Symbol">:</a> <a id="10015" class="Symbol">∀</a> <a id="10017" class="Symbol">{</a><a id="10018" href="simple_essence.html#10018" class="Bound">s</a> <a id="10020" class="Symbol">:</a> <a id="10022" href="simple_essence.html#9605" class="Bound">A</a><a id="10023" class="Symbol">}</a> <a id="10025" class="Symbol">{</a><a id="10026" href="simple_essence.html#10026" class="Bound">a</a> <a id="10028" href="simple_essence.html#10028" class="Bound">b</a> <a id="10030" class="Symbol">:</a> <a id="10032" href="simple_essence.html#9592" class="Bound">T</a><a id="10033" class="Symbol">}</a>
+                  <a id="10053" class="Comment">-------------------------</a>
+               <a id="10094" class="Symbol">→</a> <a id="10096" href="simple_essence.html#10026" class="Bound">a</a> <a id="10098" href="simple_essence.html#9792" class="Field Operator">⊙</a> <a id="10100" class="Symbol">(</a><a id="10101" href="simple_essence.html#10018" class="Bound">s</a> <a id="10103" href="simple_essence.html#7133" class="Field Operator">·</a> <a id="10105" href="simple_essence.html#10028" class="Bound">b</a><a id="10106" class="Symbol">)</a> <a id="10108" href="Agda.Builtin.Equality.html#151" class="Datatype Operator">≡</a> <a id="10110" href="simple_essence.html#10018" class="Bound">s</a> <a id="10112" href="simple_essence.html#7133" class="Field Operator">·</a> <a id="10114" class="Symbol">(</a><a id="10115" href="simple_essence.html#10026" class="Bound">a</a> <a id="10117" href="simple_essence.html#9792" class="Field Operator">⊙</a> <a id="10119" href="simple_essence.html#10028" class="Bound">b</a><a id="10120" class="Symbol">)</a>
+    <a id="VectorSpace.orthonormal"></a><a id="10126" href="simple_essence.html#10126" class="Field">orthonormal</a> <a id="10138" class="Symbol">:</a> <a id="10140" class="Symbol">∀</a> <a id="10142" class="Symbol">{</a><a id="10143" href="simple_essence.html#10143" class="Bound">f</a> <a id="10145" class="Symbol">:</a> <a id="10147" href="simple_essence.html#9592" class="Bound">T</a> <a id="10149" class="Symbol">→</a> <a id="10151" href="simple_essence.html#9605" class="Bound">A</a><a id="10152" class="Symbol">}</a>
+               <a id="10169" class="Symbol">→</a> <a id="10171" class="Symbol">{</a><a id="10172" href="simple_essence.html#10172" class="Bound">x</a> <a id="10174" class="Symbol">:</a> <a id="10176" href="simple_essence.html#9592" class="Bound">T</a><a id="10177" class="Symbol">}</a>
+                  <a id="10197" class="Comment">------------------------------------</a>
+               <a id="10249" class="Symbol">→</a> <a id="10251" class="Symbol">(</a> <a id="10253" href="Data.List.Base.html#3726" class="Function">foldl</a> <a id="10259" class="Symbol">(λ</a> <a id="10262" href="simple_essence.html#10262" class="Bound">acc</a> <a id="10266" href="simple_essence.html#10266" class="Bound">v</a> <a id="10268" class="Symbol">→</a> <a id="10270" href="simple_essence.html#10262" class="Bound">acc</a> <a id="10274" href="simple_essence.html#7287" class="Field Operator">+</a> <a id="10276" class="Symbol">(</a><a id="10277" href="simple_essence.html#10143" class="Bound">f</a> <a id="10279" href="simple_essence.html#10266" class="Bound">v</a><a id="10280" class="Symbol">)</a> <a id="10282" href="simple_essence.html#7133" class="Field Operator">·</a> <a id="10284" href="simple_essence.html#10266" class="Bound">v</a><a id="10285" class="Symbol">)</a>
+                          <a id="10313" href="simple_essence.html#7343" class="Field">𝟘</a> <a id="10315" href="simple_essence.html#9767" class="Field">basisSet</a>
+                  <a id="10342" class="Symbol">)</a> <a id="10344" href="simple_essence.html#9792" class="Field Operator">⊙</a> <a id="10346" href="simple_essence.html#10172" class="Bound">x</a> <a id="10348" href="Agda.Builtin.Equality.html#151" class="Datatype Operator">≡</a> <a id="10350" href="simple_essence.html#10143" class="Bound">f</a> <a id="10352" href="simple_essence.html#10172" class="Bound">x</a>
+<a id="10354" class="Keyword">open</a> <a id="10359" href="simple_essence.html#9577" class="Module">VectorSpace</a> <a id="10371" class="Symbol">⦃</a> <a id="10373" class="Symbol">...</a> <a id="10377" class="Symbol">⦄</a> <a id="10379" class="Keyword">public</a>
 
 </pre>
 ### Isomorphism 1: `(A ⊸ s) ↔ A`
 
 Here, I prove that a linear map from some "vector" type `T` to a scalar of its _carrier_ type `A` is isomorphic to `T`.
 
-<pre class="Agda"><a id="a⊸§→a"></a><a id="10561" href="simple_essence.html#10561" class="Function">a⊸§→a</a> <a id="10567" class="Symbol">:</a> <a id="10569" class="Symbol">{</a><a id="10570" href="simple_essence.html#10570" class="Bound">T</a> <a id="10572" class="Symbol">:</a> <a id="10574" class="PrimitiveType">Set</a> <a id="10578" href="simple_essence.html#6402" class="Generalizable">ℓ₁</a><a id="10580" class="Symbol">}</a> <a id="10582" class="Symbol">{</a><a id="10583" href="simple_essence.html#10583" class="Bound">A</a> <a id="10585" class="Symbol">:</a> <a id="10587" class="PrimitiveType">Set</a> <a id="10591" href="simple_essence.html#6402" class="Generalizable">ℓ₁</a><a id="10593" class="Symbol">}</a>
-         <a id="10604" class="Symbol">⦃</a> <a id="10606" href="simple_essence.html#10606" class="Bound">_</a> <a id="10608" class="Symbol">:</a> <a id="10610" href="simple_essence.html#7186" class="Record">Ring</a> <a id="10615" href="simple_essence.html#10570" class="Bound">T</a> <a id="10617" class="Symbol">⦄</a> <a id="10619" class="Symbol">⦃</a> <a id="10621" href="simple_essence.html#10621" class="Bound">_</a> <a id="10623" class="Symbol">:</a> <a id="10625" href="simple_essence.html#7186" class="Record">Ring</a> <a id="10630" href="simple_essence.html#10583" class="Bound">A</a> <a id="10632" class="Symbol">⦄</a>
-         <a id="10643" class="Symbol">⦃</a> <a id="10645" href="simple_essence.html#10645" class="Bound">_</a> <a id="10647" class="Symbol">:</a> <a id="10649" href="simple_essence.html#7045" class="Record">Scalable</a> <a id="10658" href="simple_essence.html#10570" class="Bound">T</a> <a id="10660" href="simple_essence.html#10583" class="Bound">A</a> <a id="10662" class="Symbol">⦄</a>
-         <a id="10673" class="Symbol">⦃</a> <a id="10675" href="simple_essence.html#10675" class="Bound">_</a> <a id="10677" class="Symbol">:</a> <a id="10679" href="simple_essence.html#9583" class="Record">VectorSpace</a> <a id="10691" href="simple_essence.html#10570" class="Bound">T</a> <a id="10693" href="simple_essence.html#10583" class="Bound">A</a> <a id="10695" class="Symbol">⦄</a>
-         <a id="10706" class="Comment">------------------------------</a>
-      <a id="10743" class="Symbol">→</a> <a id="10745" href="simple_essence.html#7842" class="Record">LinMap</a> <a id="10752" href="simple_essence.html#10570" class="Bound">T</a> <a id="10754" href="simple_essence.html#10583" class="Bound">A</a> <a id="10756" class="Symbol">{</a><a id="10757" href="simple_essence.html#10583" class="Bound">A</a><a id="10758" class="Symbol">}</a> <a id="10760" class="Symbol">→</a> <a id="10762" href="simple_essence.html#10570" class="Bound">T</a>
-<a id="10764" href="simple_essence.html#10561" class="Function">a⊸§→a</a> <a id="10770" class="Symbol">=</a> <a id="10772" class="Symbol">λ</a> <a id="10774" class="Symbol">{</a> <a id="10776" href="simple_essence.html#10776" class="Bound">lm</a> <a id="10779" class="Symbol">→</a> <a id="10781" href="Data.List.Base.html#3726" class="Function">foldl</a> <a id="10787" class="Symbol">(λ</a> <a id="10790" href="simple_essence.html#10790" class="Bound">acc</a> <a id="10794" href="simple_essence.html#10794" class="Bound">v</a> <a id="10796" class="Symbol">→</a>
-                     <a id="10819" href="simple_essence.html#10790" class="Bound">acc</a> <a id="10823" href="simple_essence.html#7287" class="Field Operator">+</a> <a id="10825" class="Symbol">(</a><a id="10826" href="simple_essence.html#8050" class="Field">LinMap.f</a> <a id="10835" href="simple_essence.html#10776" class="Bound">lm</a> <a id="10838" href="simple_essence.html#10794" class="Bound">v</a><a id="10839" class="Symbol">)</a> <a id="10841" href="simple_essence.html#7133" class="Field Operator">·</a> <a id="10843" href="simple_essence.html#10794" class="Bound">v</a><a id="10844" class="Symbol">)</a> <a id="10846" href="simple_essence.html#7343" class="Field">𝟘</a> <a id="10848" href="simple_essence.html#9773" class="Field">basisSet</a> <a id="10857" class="Symbol">}</a>
+<pre class="Agda"><a id="a⊸§→a"></a><a id="10555" href="simple_essence.html#10555" class="Function">a⊸§→a</a> <a id="10561" class="Symbol">:</a> <a id="10563" class="Symbol">{</a><a id="10564" href="simple_essence.html#10564" class="Bound">T</a> <a id="10566" class="Symbol">:</a> <a id="10568" class="PrimitiveType">Set</a> <a id="10572" href="simple_essence.html#6402" class="Generalizable">ℓ₁</a><a id="10574" class="Symbol">}</a> <a id="10576" class="Symbol">{</a><a id="10577" href="simple_essence.html#10577" class="Bound">A</a> <a id="10579" class="Symbol">:</a> <a id="10581" class="PrimitiveType">Set</a> <a id="10585" href="simple_essence.html#6402" class="Generalizable">ℓ₁</a><a id="10587" class="Symbol">}</a>
+         <a id="10598" class="Symbol">⦃</a> <a id="10600" href="simple_essence.html#10600" class="Bound">_</a> <a id="10602" class="Symbol">:</a> <a id="10604" href="simple_essence.html#7186" class="Record">Ring</a> <a id="10609" href="simple_essence.html#10564" class="Bound">T</a> <a id="10611" class="Symbol">⦄</a> <a id="10613" class="Symbol">⦃</a> <a id="10615" href="simple_essence.html#10615" class="Bound">_</a> <a id="10617" class="Symbol">:</a> <a id="10619" href="simple_essence.html#7186" class="Record">Ring</a> <a id="10624" href="simple_essence.html#10577" class="Bound">A</a> <a id="10626" class="Symbol">⦄</a>
+         <a id="10637" class="Symbol">⦃</a> <a id="10639" href="simple_essence.html#10639" class="Bound">_</a> <a id="10641" class="Symbol">:</a> <a id="10643" href="simple_essence.html#7045" class="Record">Scalable</a> <a id="10652" href="simple_essence.html#10564" class="Bound">T</a> <a id="10654" href="simple_essence.html#10577" class="Bound">A</a> <a id="10656" class="Symbol">⦄</a>
+         <a id="10667" class="Symbol">⦃</a> <a id="10669" href="simple_essence.html#10669" class="Bound">_</a> <a id="10671" class="Symbol">:</a> <a id="10673" href="simple_essence.html#9577" class="Record">VectorSpace</a> <a id="10685" href="simple_essence.html#10564" class="Bound">T</a> <a id="10687" href="simple_essence.html#10577" class="Bound">A</a> <a id="10689" class="Symbol">⦄</a>
+         <a id="10700" class="Comment">------------------------------</a>
+      <a id="10737" class="Symbol">→</a> <a id="10739" href="simple_essence.html#7842" class="Record">LinMap</a> <a id="10746" href="simple_essence.html#10564" class="Bound">T</a> <a id="10748" href="simple_essence.html#10577" class="Bound">A</a> <a id="10750" class="Symbol">{</a><a id="10751" href="simple_essence.html#10577" class="Bound">A</a><a id="10752" class="Symbol">}</a> <a id="10754" class="Symbol">→</a> <a id="10756" href="simple_essence.html#10564" class="Bound">T</a>
+<a id="10758" href="simple_essence.html#10555" class="Function">a⊸§→a</a> <a id="10764" class="Symbol">=</a> <a id="10766" class="Symbol">λ</a> <a id="10768" class="Symbol">{</a> <a id="10770" href="simple_essence.html#10770" class="Bound">lm</a> <a id="10773" class="Symbol">→</a> <a id="10775" href="Data.List.Base.html#3726" class="Function">foldl</a> <a id="10781" class="Symbol">(λ</a> <a id="10784" href="simple_essence.html#10784" class="Bound">acc</a> <a id="10788" href="simple_essence.html#10788" class="Bound">v</a> <a id="10790" class="Symbol">→</a>
+                     <a id="10813" href="simple_essence.html#10784" class="Bound">acc</a> <a id="10817" href="simple_essence.html#7287" class="Field Operator">+</a> <a id="10819" class="Symbol">(</a><a id="10820" href="simple_essence.html#8050" class="Field">LinMap.f</a> <a id="10829" href="simple_essence.html#10770" class="Bound">lm</a> <a id="10832" href="simple_essence.html#10788" class="Bound">v</a><a id="10833" class="Symbol">)</a> <a id="10835" href="simple_essence.html#7133" class="Field Operator">·</a> <a id="10837" href="simple_essence.html#10788" class="Bound">v</a><a id="10838" class="Symbol">)</a> <a id="10840" href="simple_essence.html#7343" class="Field">𝟘</a> <a id="10842" href="simple_essence.html#9767" class="Field">basisSet</a> <a id="10851" class="Symbol">}</a>
 
-<a id="a⊸§←a"></a><a id="10860" href="simple_essence.html#10860" class="Function">a⊸§←a</a> <a id="10866" class="Symbol">:</a> <a id="10868" class="Symbol">{</a><a id="10869" href="simple_essence.html#10869" class="Bound">T</a> <a id="10871" class="Symbol">:</a> <a id="10873" class="PrimitiveType">Set</a> <a id="10877" href="simple_essence.html#6402" class="Generalizable">ℓ₁</a><a id="10879" class="Symbol">}</a> <a id="10881" class="Symbol">{</a><a id="10882" href="simple_essence.html#10882" class="Bound">A</a> <a id="10884" class="Symbol">:</a> <a id="10886" class="PrimitiveType">Set</a> <a id="10890" href="simple_essence.html#6402" class="Generalizable">ℓ₁</a><a id="10892" class="Symbol">}</a>
-         <a id="10903" class="Symbol">⦃</a> <a id="10905" href="simple_essence.html#10905" class="Bound">_</a> <a id="10907" class="Symbol">:</a> <a id="10909" href="simple_essence.html#7186" class="Record">Ring</a> <a id="10914" href="simple_essence.html#10869" class="Bound">T</a> <a id="10916" class="Symbol">⦄</a> <a id="10918" class="Symbol">⦃</a> <a id="10920" href="simple_essence.html#10920" class="Bound">_</a> <a id="10922" class="Symbol">:</a> <a id="10924" href="simple_essence.html#7186" class="Record">Ring</a> <a id="10929" href="simple_essence.html#10882" class="Bound">A</a> <a id="10931" class="Symbol">⦄</a>
-         <a id="10942" class="Symbol">⦃</a> <a id="10944" href="simple_essence.html#10944" class="Bound">_</a> <a id="10946" class="Symbol">:</a> <a id="10948" href="simple_essence.html#7045" class="Record">Scalable</a> <a id="10957" href="simple_essence.html#10869" class="Bound">T</a> <a id="10959" href="simple_essence.html#10882" class="Bound">A</a> <a id="10961" class="Symbol">⦄</a>
-         <a id="10972" class="Symbol">⦃</a> <a id="10974" href="simple_essence.html#10974" class="Bound">_</a> <a id="10976" class="Symbol">:</a> <a id="10978" href="simple_essence.html#9583" class="Record">VectorSpace</a> <a id="10990" href="simple_essence.html#10869" class="Bound">T</a> <a id="10992" href="simple_essence.html#10882" class="Bound">A</a> <a id="10994" class="Symbol">⦄</a>
-         <a id="11005" class="Comment">--------------------------------------</a>
-      <a id="11050" class="Symbol">→</a> <a id="11052" href="simple_essence.html#10869" class="Bound">T</a> <a id="11054" class="Symbol">→</a> <a id="11056" href="simple_essence.html#7842" class="Record">LinMap</a> <a id="11063" href="simple_essence.html#10869" class="Bound">T</a> <a id="11065" href="simple_essence.html#10882" class="Bound">A</a> <a id="11067" class="Symbol">{</a><a id="11068" href="simple_essence.html#10882" class="Bound">A</a><a id="11069" class="Symbol">}</a>
-<a id="11071" href="simple_essence.html#10860" class="Function">a⊸§←a</a> <a id="11077" class="Symbol">=</a> <a id="11079" class="Symbol">λ</a> <a id="11081" class="Symbol">{</a> <a id="11083" href="simple_essence.html#11083" class="Bound">a</a> <a id="11085" class="Symbol">→</a> <a id="11087" href="simple_essence.html#8033" class="InductiveConstructor">mkLM</a> <a id="11092" class="Symbol">(</a><a id="11093" href="simple_essence.html#11083" class="Bound">a</a> <a id="11095" href="simple_essence.html#9798" class="Field Operator">⊙_</a><a id="11097" class="Symbol">)</a> <a id="11099" href="simple_essence.html#9876" class="Field">⊙-distrib-+</a> <a id="11111" href="simple_essence.html#10007" class="Field">⊙-comm-·</a> <a id="11120" class="Symbol">}</a>
+<a id="a⊸§←a"></a><a id="10854" href="simple_essence.html#10854" class="Function">a⊸§←a</a> <a id="10860" class="Symbol">:</a> <a id="10862" class="Symbol">{</a><a id="10863" href="simple_essence.html#10863" class="Bound">T</a> <a id="10865" class="Symbol">:</a> <a id="10867" class="PrimitiveType">Set</a> <a id="10871" href="simple_essence.html#6402" class="Generalizable">ℓ₁</a><a id="10873" class="Symbol">}</a> <a id="10875" class="Symbol">{</a><a id="10876" href="simple_essence.html#10876" class="Bound">A</a> <a id="10878" class="Symbol">:</a> <a id="10880" class="PrimitiveType">Set</a> <a id="10884" href="simple_essence.html#6402" class="Generalizable">ℓ₁</a><a id="10886" class="Symbol">}</a>
+         <a id="10897" class="Symbol">⦃</a> <a id="10899" href="simple_essence.html#10899" class="Bound">_</a> <a id="10901" class="Symbol">:</a> <a id="10903" href="simple_essence.html#7186" class="Record">Ring</a> <a id="10908" href="simple_essence.html#10863" class="Bound">T</a> <a id="10910" class="Symbol">⦄</a> <a id="10912" class="Symbol">⦃</a> <a id="10914" href="simple_essence.html#10914" class="Bound">_</a> <a id="10916" class="Symbol">:</a> <a id="10918" href="simple_essence.html#7186" class="Record">Ring</a> <a id="10923" href="simple_essence.html#10876" class="Bound">A</a> <a id="10925" class="Symbol">⦄</a>
+         <a id="10936" class="Symbol">⦃</a> <a id="10938" href="simple_essence.html#10938" class="Bound">_</a> <a id="10940" class="Symbol">:</a> <a id="10942" href="simple_essence.html#7045" class="Record">Scalable</a> <a id="10951" href="simple_essence.html#10863" class="Bound">T</a> <a id="10953" href="simple_essence.html#10876" class="Bound">A</a> <a id="10955" class="Symbol">⦄</a>
+         <a id="10966" class="Symbol">⦃</a> <a id="10968" href="simple_essence.html#10968" class="Bound">_</a> <a id="10970" class="Symbol">:</a> <a id="10972" href="simple_essence.html#9577" class="Record">VectorSpace</a> <a id="10984" href="simple_essence.html#10863" class="Bound">T</a> <a id="10986" href="simple_essence.html#10876" class="Bound">A</a> <a id="10988" class="Symbol">⦄</a>
+         <a id="10999" class="Comment">--------------------------------------</a>
+      <a id="11044" class="Symbol">→</a> <a id="11046" href="simple_essence.html#10863" class="Bound">T</a> <a id="11048" class="Symbol">→</a> <a id="11050" href="simple_essence.html#7842" class="Record">LinMap</a> <a id="11057" href="simple_essence.html#10863" class="Bound">T</a> <a id="11059" href="simple_essence.html#10876" class="Bound">A</a> <a id="11061" class="Symbol">{</a><a id="11062" href="simple_essence.html#10876" class="Bound">A</a><a id="11063" class="Symbol">}</a>
+<a id="11065" href="simple_essence.html#10854" class="Function">a⊸§←a</a> <a id="11071" class="Symbol">=</a> <a id="11073" class="Symbol">λ</a> <a id="11075" class="Symbol">{</a> <a id="11077" href="simple_essence.html#11077" class="Bound">a</a> <a id="11079" class="Symbol">→</a> <a id="11081" href="simple_essence.html#8033" class="InductiveConstructor">mkLM</a> <a id="11086" class="Symbol">(</a><a id="11087" href="simple_essence.html#11077" class="Bound">a</a> <a id="11089" href="simple_essence.html#9792" class="Field Operator">⊙_</a><a id="11091" class="Symbol">)</a> <a id="11093" href="simple_essence.html#9870" class="Field">⊙-distrib-+</a> <a id="11105" href="simple_essence.html#10001" class="Field">⊙-comm-·</a> <a id="11114" class="Symbol">}</a>
 
-<a id="11123" class="Comment">-- Danger, Will Robinson!</a>
-<a id="11149" class="Keyword">postulate</a>
-  <a id="x·z≡y·z→x≡y"></a><a id="11161" href="simple_essence.html#11161" class="Postulate">x·z≡y·z→x≡y</a> <a id="11173" class="Symbol">:</a> <a id="11175" class="Symbol">{</a><a id="11176" href="simple_essence.html#11176" class="Bound">T</a> <a id="11178" class="Symbol">:</a> <a id="11180" class="PrimitiveType">Set</a> <a id="11184" href="simple_essence.html#6402" class="Generalizable">ℓ₁</a><a id="11186" class="Symbol">}</a> <a id="11188" class="Symbol">{</a><a id="11189" href="simple_essence.html#11189" class="Bound">A</a> <a id="11191" class="Symbol">:</a> <a id="11193" class="PrimitiveType">Set</a> <a id="11197" href="simple_essence.html#6402" class="Generalizable">ℓ₁</a><a id="11199" class="Symbol">}</a>
-                 <a id="11218" class="Symbol">⦃</a> <a id="11220" href="simple_essence.html#11220" class="Bound">_</a> <a id="11222" class="Symbol">:</a> <a id="11224" href="simple_essence.html#7186" class="Record">Ring</a> <a id="11229" href="simple_essence.html#11176" class="Bound">T</a> <a id="11231" class="Symbol">⦄</a> <a id="11233" class="Symbol">⦃</a> <a id="11235" href="simple_essence.html#11235" class="Bound">_</a> <a id="11237" class="Symbol">:</a> <a id="11239" href="simple_essence.html#7186" class="Record">Ring</a> <a id="11244" href="simple_essence.html#11189" class="Bound">A</a> <a id="11246" class="Symbol">⦄</a>
-                 <a id="11265" class="Symbol">⦃</a> <a id="11267" href="simple_essence.html#11267" class="Bound">_</a> <a id="11269" class="Symbol">:</a> <a id="11271" href="simple_essence.html#7045" class="Record">Scalable</a> <a id="11280" href="simple_essence.html#11176" class="Bound">T</a> <a id="11282" href="simple_essence.html#11189" class="Bound">A</a> <a id="11284" class="Symbol">⦄</a> <a id="11286" class="Symbol">⦃</a> <a id="11288" href="simple_essence.html#11288" class="Bound">_</a> <a id="11290" class="Symbol">:</a> <a id="11292" href="simple_essence.html#9583" class="Record">VectorSpace</a> <a id="11304" href="simple_essence.html#11176" class="Bound">T</a> <a id="11306" href="simple_essence.html#11189" class="Bound">A</a> <a id="11308" class="Symbol">⦄</a>
-                 <a id="11327" class="Symbol">{</a><a id="11328" href="simple_essence.html#11328" class="Bound">x</a> <a id="11330" href="simple_essence.html#11330" class="Bound">y</a> <a id="11332" class="Symbol">:</a> <a id="11334" href="simple_essence.html#11176" class="Bound">T</a><a id="11335" class="Symbol">}</a>
-              <a id="11351" class="Symbol">→</a> <a id="11353" class="Symbol">(∀</a> <a id="11356" class="Symbol">{</a><a id="11357" href="simple_essence.html#11357" class="Bound">z</a> <a id="11359" class="Symbol">:</a> <a id="11361" href="simple_essence.html#11176" class="Bound">T</a><a id="11362" class="Symbol">}</a> <a id="11364" class="Symbol">→</a> <a id="11366" href="simple_essence.html#11328" class="Bound">x</a> <a id="11368" href="simple_essence.html#9798" class="Field Operator">⊙</a> <a id="11370" href="simple_essence.html#11357" class="Bound">z</a> <a id="11372" href="Agda.Builtin.Equality.html#151" class="Datatype Operator">≡</a> <a id="11374" href="simple_essence.html#11330" class="Bound">y</a> <a id="11376" href="simple_essence.html#9798" class="Field Operator">⊙</a> <a id="11378" href="simple_essence.html#11357" class="Bound">z</a><a id="11379" class="Symbol">)</a>
-                 <a id="11398" class="Comment">---------------------------------------------</a>
-              <a id="11458" class="Symbol">→</a> <a id="11460" href="simple_essence.html#11328" class="Bound">x</a> <a id="11462" href="Agda.Builtin.Equality.html#151" class="Datatype Operator">≡</a> <a id="11464" href="simple_essence.html#11330" class="Bound">y</a>
-<a id="11466" class="Comment">-- ToDo: Try replacing postulate above w/ definition below.</a>
-<a id="11526" class="Comment">--       (Perhaps, a proof by contradiction, starting w/ `x ≢ y`?)</a>
-<a id="11593" class="Comment">-- x·z≡y·z→x≡y x·z≡y·z = {!!}</a>
+<a id="11117" class="Comment">-- Danger, Will Robinson!</a>
+<a id="11143" class="Keyword">postulate</a>
+  <a id="x·z≡y·z→x≡y"></a><a id="11155" href="simple_essence.html#11155" class="Postulate">x·z≡y·z→x≡y</a> <a id="11167" class="Symbol">:</a> <a id="11169" class="Symbol">{</a><a id="11170" href="simple_essence.html#11170" class="Bound">T</a> <a id="11172" class="Symbol">:</a> <a id="11174" class="PrimitiveType">Set</a> <a id="11178" href="simple_essence.html#6402" class="Generalizable">ℓ₁</a><a id="11180" class="Symbol">}</a> <a id="11182" class="Symbol">{</a><a id="11183" href="simple_essence.html#11183" class="Bound">A</a> <a id="11185" class="Symbol">:</a> <a id="11187" class="PrimitiveType">Set</a> <a id="11191" href="simple_essence.html#6402" class="Generalizable">ℓ₁</a><a id="11193" class="Symbol">}</a>
+                 <a id="11212" class="Symbol">⦃</a> <a id="11214" href="simple_essence.html#11214" class="Bound">_</a> <a id="11216" class="Symbol">:</a> <a id="11218" href="simple_essence.html#7186" class="Record">Ring</a> <a id="11223" href="simple_essence.html#11170" class="Bound">T</a> <a id="11225" class="Symbol">⦄</a> <a id="11227" class="Symbol">⦃</a> <a id="11229" href="simple_essence.html#11229" class="Bound">_</a> <a id="11231" class="Symbol">:</a> <a id="11233" href="simple_essence.html#7186" class="Record">Ring</a> <a id="11238" href="simple_essence.html#11183" class="Bound">A</a> <a id="11240" class="Symbol">⦄</a>
+                 <a id="11259" class="Symbol">⦃</a> <a id="11261" href="simple_essence.html#11261" class="Bound">_</a> <a id="11263" class="Symbol">:</a> <a id="11265" href="simple_essence.html#7045" class="Record">Scalable</a> <a id="11274" href="simple_essence.html#11170" class="Bound">T</a> <a id="11276" href="simple_essence.html#11183" class="Bound">A</a> <a id="11278" class="Symbol">⦄</a> <a id="11280" class="Symbol">⦃</a> <a id="11282" href="simple_essence.html#11282" class="Bound">_</a> <a id="11284" class="Symbol">:</a> <a id="11286" href="simple_essence.html#9577" class="Record">VectorSpace</a> <a id="11298" href="simple_essence.html#11170" class="Bound">T</a> <a id="11300" href="simple_essence.html#11183" class="Bound">A</a> <a id="11302" class="Symbol">⦄</a>
+                 <a id="11321" class="Symbol">{</a><a id="11322" href="simple_essence.html#11322" class="Bound">x</a> <a id="11324" href="simple_essence.html#11324" class="Bound">y</a> <a id="11326" class="Symbol">:</a> <a id="11328" href="simple_essence.html#11170" class="Bound">T</a><a id="11329" class="Symbol">}</a>
+              <a id="11345" class="Symbol">→</a> <a id="11347" class="Symbol">(∀</a> <a id="11350" class="Symbol">{</a><a id="11351" href="simple_essence.html#11351" class="Bound">z</a> <a id="11353" class="Symbol">:</a> <a id="11355" href="simple_essence.html#11170" class="Bound">T</a><a id="11356" class="Symbol">}</a> <a id="11358" class="Symbol">→</a> <a id="11360" href="simple_essence.html#11322" class="Bound">x</a> <a id="11362" href="simple_essence.html#9792" class="Field Operator">⊙</a> <a id="11364" href="simple_essence.html#11351" class="Bound">z</a> <a id="11366" href="Agda.Builtin.Equality.html#151" class="Datatype Operator">≡</a> <a id="11368" href="simple_essence.html#11324" class="Bound">y</a> <a id="11370" href="simple_essence.html#9792" class="Field Operator">⊙</a> <a id="11372" href="simple_essence.html#11351" class="Bound">z</a><a id="11373" class="Symbol">)</a>
+                 <a id="11392" class="Comment">---------------------------------------------</a>
+              <a id="11452" class="Symbol">→</a> <a id="11454" href="simple_essence.html#11322" class="Bound">x</a> <a id="11456" href="Agda.Builtin.Equality.html#151" class="Datatype Operator">≡</a> <a id="11458" href="simple_essence.html#11324" class="Bound">y</a>
+<a id="11460" class="Comment">-- ToDo: Try replacing postulate above w/ definition below.</a>
+<a id="11520" class="Comment">--       (Perhaps, a proof by contradiction, starting w/ `x ≢ y`?)</a>
+<a id="11587" class="Comment">-- x·z≡y·z→x≡y x·z≡y·z = {!!}</a>
 
-<a id="a⊸§↔a"></a><a id="11624" href="simple_essence.html#11624" class="Function">a⊸§↔a</a> <a id="11630" class="Symbol">:</a> <a id="11632" class="Symbol">{</a><a id="11633" href="simple_essence.html#11633" class="Bound">T</a> <a id="11635" class="Symbol">:</a> <a id="11637" class="PrimitiveType">Set</a> <a id="11641" href="simple_essence.html#6402" class="Generalizable">ℓ₁</a><a id="11643" class="Symbol">}</a> <a id="11645" class="Symbol">{</a><a id="11646" href="simple_essence.html#11646" class="Bound">A</a> <a id="11648" class="Symbol">:</a> <a id="11650" class="PrimitiveType">Set</a> <a id="11654" href="simple_essence.html#6402" class="Generalizable">ℓ₁</a><a id="11656" class="Symbol">}</a>
-         <a id="11667" class="Symbol">⦃</a> <a id="11669" href="simple_essence.html#11669" class="Bound">_</a> <a id="11671" class="Symbol">:</a> <a id="11673" href="simple_essence.html#7186" class="Record">Ring</a> <a id="11678" href="simple_essence.html#11633" class="Bound">T</a> <a id="11680" class="Symbol">⦄</a> <a id="11682" class="Symbol">⦃</a> <a id="11684" href="simple_essence.html#11684" class="Bound">_</a> <a id="11686" class="Symbol">:</a> <a id="11688" href="simple_essence.html#7186" class="Record">Ring</a> <a id="11693" href="simple_essence.html#11646" class="Bound">A</a> <a id="11695" class="Symbol">⦄</a>
-         <a id="11706" class="Symbol">⦃</a> <a id="11708" href="simple_essence.html#11708" class="Bound">_</a> <a id="11710" class="Symbol">:</a> <a id="11712" href="simple_essence.html#7045" class="Record">Scalable</a> <a id="11721" href="simple_essence.html#11633" class="Bound">T</a> <a id="11723" href="simple_essence.html#11646" class="Bound">A</a> <a id="11725" class="Symbol">⦄</a> <a id="11727" class="Symbol">⦃</a> <a id="11729" href="simple_essence.html#11729" class="Bound">_</a> <a id="11731" class="Symbol">:</a> <a id="11733" href="simple_essence.html#9583" class="Record">VectorSpace</a> <a id="11745" href="simple_essence.html#11633" class="Bound">T</a> <a id="11747" href="simple_essence.html#11646" class="Bound">A</a> <a id="11749" class="Symbol">⦄</a>
-         <a id="11760" class="Comment">---------------------------------------------</a>
-      <a id="11812" class="Symbol">→</a> <a id="11814" class="Symbol">(</a><a id="11815" href="simple_essence.html#7842" class="Record">LinMap</a> <a id="11822" href="simple_essence.html#11633" class="Bound">T</a> <a id="11824" href="simple_essence.html#11646" class="Bound">A</a><a id="11825" class="Symbol">)</a> <a id="11827" href="Function.Bundles.html#7902" class="Function Operator">↔</a> <a id="11829" href="simple_essence.html#11633" class="Bound">T</a>
-<a id="11831" href="simple_essence.html#11624" class="Function">a⊸§↔a</a> <a id="11837" class="Symbol">=</a>
-  <a id="11841" href="Function.Bundles.html#9488" class="Function">mk↔</a> <a id="11845" class="Symbol">{</a><a id="11846" class="Argument">f</a> <a id="11848" class="Symbol">=</a> <a id="11850" href="simple_essence.html#10561" class="Function">a⊸§→a</a><a id="11855" class="Symbol">}</a> <a id="11857" class="Symbol">{</a><a id="11858" class="Argument">f⁻¹</a> <a id="11862" class="Symbol">=</a> <a id="11864" href="simple_essence.html#10860" class="Function">a⊸§←a</a><a id="11869" class="Symbol">}</a>
-      <a id="11877" class="Symbol">(</a> <a id="11879" class="Symbol">(λ</a> <a id="11882" class="Symbol">{</a><a id="11883" href="simple_essence.html#11883" class="Bound">x</a> <a id="11885" class="Symbol">→</a> <a id="11887" href="Relation.Binary.PropositionalEquality.Core.html#2517" class="Function Operator">begin</a>
-                  <a id="11911" href="simple_essence.html#10561" class="Function">a⊸§→a</a> <a id="11917" class="Symbol">(</a><a id="11918" href="simple_essence.html#10860" class="Function">a⊸§←a</a> <a id="11924" href="simple_essence.html#11883" class="Bound">x</a><a id="11925" class="Symbol">)</a>
-                <a id="11943" href="Relation.Binary.PropositionalEquality.Core.html#2575" class="Function Operator">≡⟨⟩</a>
-                  <a id="11965" href="simple_essence.html#10561" class="Function">a⊸§→a</a> <a id="11971" class="Symbol">(</a><a id="11972" href="simple_essence.html#8033" class="InductiveConstructor">mkLM</a> <a id="11977" class="Symbol">(</a><a id="11978" href="simple_essence.html#11883" class="Bound">x</a> <a id="11980" href="simple_essence.html#9798" class="Field Operator">⊙_</a><a id="11982" class="Symbol">)</a> <a id="11984" href="simple_essence.html#9876" class="Field">⊙-distrib-+</a> <a id="11996" href="simple_essence.html#10007" class="Field">⊙-comm-·</a><a id="12004" class="Symbol">)</a>
-                <a id="12022" href="Relation.Binary.PropositionalEquality.Core.html#2575" class="Function Operator">≡⟨⟩</a>
-                  <a id="12044" href="Data.List.Base.html#3726" class="Function">foldl</a> <a id="12050" class="Symbol">(λ</a> <a id="12053" href="simple_essence.html#12053" class="Bound">acc</a> <a id="12057" href="simple_essence.html#12057" class="Bound">v</a> <a id="12059" class="Symbol">→</a> <a id="12061" href="simple_essence.html#12053" class="Bound">acc</a> <a id="12065" href="simple_essence.html#7287" class="Field Operator">+</a> <a id="12067" class="Symbol">(</a><a id="12068" href="simple_essence.html#11883" class="Bound">x</a> <a id="12070" href="simple_essence.html#9798" class="Field Operator">⊙</a> <a id="12072" href="simple_essence.html#12057" class="Bound">v</a><a id="12073" class="Symbol">)</a> <a id="12075" href="simple_essence.html#7133" class="Field Operator">·</a> <a id="12077" href="simple_essence.html#12057" class="Bound">v</a><a id="12078" class="Symbol">)</a> <a id="12080" href="simple_essence.html#7343" class="Field">𝟘</a> <a id="12082" href="simple_essence.html#9773" class="Field">basisSet</a>
-                <a id="12107" href="Relation.Binary.PropositionalEquality.Core.html#2634" class="Function">≡⟨</a> <a id="12110" href="simple_essence.html#11161" class="Postulate">x·z≡y·z→x≡y</a> <a id="12122" href="simple_essence.html#10132" class="Field">orthonormal</a> <a id="12134" href="Relation.Binary.PropositionalEquality.Core.html#2634" class="Function">⟩</a>
-                  <a id="12154" href="simple_essence.html#11883" class="Bound">x</a>
-                <a id="12172" href="Relation.Binary.PropositionalEquality.Core.html#2816" class="Function Operator">∎</a><a id="12173" class="Symbol">})</a>
-      <a id="12182" href="Agda.Builtin.Sigma.html#236" class="InductiveConstructor Operator">,</a> <a id="12184" class="Symbol">λ</a> <a id="12186" class="Symbol">{</a><a id="12187" href="simple_essence.html#12187" class="Bound">lm</a> <a id="12190" class="Symbol">→</a> <a id="12192" href="Relation.Binary.PropositionalEquality.Core.html#2517" class="Function Operator">begin</a>
-                    <a id="12218" href="simple_essence.html#10860" class="Function">a⊸§←a</a> <a id="12224" class="Symbol">(</a><a id="12225" href="simple_essence.html#10561" class="Function">a⊸§→a</a> <a id="12231" href="simple_essence.html#12187" class="Bound">lm</a><a id="12233" class="Symbol">)</a>
-                  <a id="12253" href="Relation.Binary.PropositionalEquality.Core.html#2575" class="Function Operator">≡⟨⟩</a>
-                    <a id="12277" href="simple_essence.html#10860" class="Function">a⊸§←a</a> <a id="12283" class="Symbol">(</a><a id="12284" href="Data.List.Base.html#3726" class="Function">foldl</a> <a id="12290" class="Symbol">(λ</a> <a id="12293" href="simple_essence.html#12293" class="Bound">acc</a> <a id="12297" href="simple_essence.html#12297" class="Bound">v</a> <a id="12299" class="Symbol">→</a>
-                                     <a id="12338" href="simple_essence.html#12293" class="Bound">acc</a> <a id="12342" href="simple_essence.html#7287" class="Field Operator">+</a> <a id="12344" class="Symbol">(</a><a id="12345" href="simple_essence.html#8050" class="Field">LinMap.f</a> <a id="12354" href="simple_essence.html#12187" class="Bound">lm</a> <a id="12357" href="simple_essence.html#12297" class="Bound">v</a><a id="12358" class="Symbol">)</a> <a id="12360" href="simple_essence.html#7133" class="Field Operator">·</a> <a id="12362" href="simple_essence.html#12297" class="Bound">v</a><a id="12363" class="Symbol">)</a> <a id="12365" href="simple_essence.html#7343" class="Field">𝟘</a> <a id="12367" href="simple_essence.html#9773" class="Field">basisSet</a><a id="12375" class="Symbol">)</a>
-                  <a id="12395" href="Relation.Binary.PropositionalEquality.Core.html#2575" class="Function Operator">≡⟨⟩</a>
-                    <a id="12419" href="simple_essence.html#8033" class="InductiveConstructor">mkLM</a> <a id="12424" class="Symbol">(</a> <a id="12426" href="Data.List.Base.html#3726" class="Function">foldl</a> <a id="12432" class="Symbol">(</a> <a id="12434" class="Symbol">λ</a> <a id="12436" href="simple_essence.html#12436" class="Bound">acc</a> <a id="12440" href="simple_essence.html#12440" class="Bound">v</a> <a id="12442" class="Symbol">→</a>
-                                     <a id="12481" href="simple_essence.html#12436" class="Bound">acc</a> <a id="12485" href="simple_essence.html#7287" class="Field Operator">+</a> <a id="12487" class="Symbol">(</a><a id="12488" href="simple_essence.html#8050" class="Field">LinMap.f</a> <a id="12497" href="simple_essence.html#12187" class="Bound">lm</a> <a id="12500" href="simple_essence.html#12440" class="Bound">v</a><a id="12501" class="Symbol">)</a> <a id="12503" href="simple_essence.html#7133" class="Field Operator">·</a> <a id="12505" href="simple_essence.html#12440" class="Bound">v</a>
-                                 <a id="12540" class="Symbol">)</a> <a id="12542" href="simple_essence.html#7343" class="Field">𝟘</a> <a id="12544" href="simple_essence.html#9773" class="Field">basisSet</a>
-                           <a id="12580" href="simple_essence.html#9798" class="Field Operator">⊙_</a>
-                         <a id="12608" class="Symbol">)</a> <a id="12610" href="simple_essence.html#9876" class="Field">⊙-distrib-+</a> <a id="12622" href="simple_essence.html#10007" class="Field">⊙-comm-·</a>
-                  <a id="12649" href="Relation.Binary.PropositionalEquality.Core.html#2634" class="Function">≡⟨</a> <a id="12652" href="simple_essence.html#8372" class="Postulate">⊸≡</a> <a id="12655" class="Symbol">(</a> <a id="12657" href="simple_essence.html#6434" class="Postulate">extensionality</a>
-                            <a id="12700" class="Symbol">(</a> <a id="12702" class="Symbol">λ</a> <a id="12704" href="simple_essence.html#12704" class="Bound">x</a> <a id="12706" class="Symbol">→</a> <a id="12708" href="simple_essence.html#10132" class="Field">orthonormal</a> <a id="12720" class="Symbol">{</a><a id="12721" class="Argument">f</a> <a id="12723" class="Symbol">=</a> <a id="12725" href="simple_essence.html#8050" class="Field">LinMap.f</a> <a id="12734" href="simple_essence.html#12187" class="Bound">lm</a><a id="12736" class="Symbol">}</a> <a id="12738" class="Symbol">{</a><a id="12739" class="Argument">x</a> <a id="12741" class="Symbol">=</a> <a id="12743" href="simple_essence.html#12704" class="Bound">x</a><a id="12744" class="Symbol">}</a> <a id="12746" class="Symbol">)</a>
-                        <a id="12772" class="Symbol">)</a>
-                   <a id="12793" href="Relation.Binary.PropositionalEquality.Core.html#2634" class="Function">⟩</a>
-                    <a id="12815" href="simple_essence.html#12187" class="Bound">lm</a>
-                  <a id="12836" href="Relation.Binary.PropositionalEquality.Core.html#2816" class="Function Operator">∎</a><a id="12837" class="Symbol">}</a>
-      <a id="12845" class="Symbol">)</a>
+<a id="a⊸§↔a"></a><a id="11618" href="simple_essence.html#11618" class="Function">a⊸§↔a</a> <a id="11624" class="Symbol">:</a> <a id="11626" class="Symbol">{</a><a id="11627" href="simple_essence.html#11627" class="Bound">T</a> <a id="11629" class="Symbol">:</a> <a id="11631" class="PrimitiveType">Set</a> <a id="11635" href="simple_essence.html#6402" class="Generalizable">ℓ₁</a><a id="11637" class="Symbol">}</a> <a id="11639" class="Symbol">{</a><a id="11640" href="simple_essence.html#11640" class="Bound">A</a> <a id="11642" class="Symbol">:</a> <a id="11644" class="PrimitiveType">Set</a> <a id="11648" href="simple_essence.html#6402" class="Generalizable">ℓ₁</a><a id="11650" class="Symbol">}</a>
+         <a id="11661" class="Symbol">⦃</a> <a id="11663" href="simple_essence.html#11663" class="Bound">_</a> <a id="11665" class="Symbol">:</a> <a id="11667" href="simple_essence.html#7186" class="Record">Ring</a> <a id="11672" href="simple_essence.html#11627" class="Bound">T</a> <a id="11674" class="Symbol">⦄</a> <a id="11676" class="Symbol">⦃</a> <a id="11678" href="simple_essence.html#11678" class="Bound">_</a> <a id="11680" class="Symbol">:</a> <a id="11682" href="simple_essence.html#7186" class="Record">Ring</a> <a id="11687" href="simple_essence.html#11640" class="Bound">A</a> <a id="11689" class="Symbol">⦄</a>
+         <a id="11700" class="Symbol">⦃</a> <a id="11702" href="simple_essence.html#11702" class="Bound">_</a> <a id="11704" class="Symbol">:</a> <a id="11706" href="simple_essence.html#7045" class="Record">Scalable</a> <a id="11715" href="simple_essence.html#11627" class="Bound">T</a> <a id="11717" href="simple_essence.html#11640" class="Bound">A</a> <a id="11719" class="Symbol">⦄</a> <a id="11721" class="Symbol">⦃</a> <a id="11723" href="simple_essence.html#11723" class="Bound">_</a> <a id="11725" class="Symbol">:</a> <a id="11727" href="simple_essence.html#9577" class="Record">VectorSpace</a> <a id="11739" href="simple_essence.html#11627" class="Bound">T</a> <a id="11741" href="simple_essence.html#11640" class="Bound">A</a> <a id="11743" class="Symbol">⦄</a>
+         <a id="11754" class="Comment">---------------------------------------------</a>
+      <a id="11806" class="Symbol">→</a> <a id="11808" class="Symbol">(</a><a id="11809" href="simple_essence.html#7842" class="Record">LinMap</a> <a id="11816" href="simple_essence.html#11627" class="Bound">T</a> <a id="11818" href="simple_essence.html#11640" class="Bound">A</a><a id="11819" class="Symbol">)</a> <a id="11821" href="Function.Bundles.html#7902" class="Function Operator">↔</a> <a id="11823" href="simple_essence.html#11627" class="Bound">T</a>
+<a id="11825" href="simple_essence.html#11618" class="Function">a⊸§↔a</a> <a id="11831" class="Symbol">=</a>
+  <a id="11835" href="Function.Bundles.html#9488" class="Function">mk↔</a> <a id="11839" class="Symbol">{</a><a id="11840" class="Argument">f</a> <a id="11842" class="Symbol">=</a> <a id="11844" href="simple_essence.html#10555" class="Function">a⊸§→a</a><a id="11849" class="Symbol">}</a> <a id="11851" class="Symbol">{</a><a id="11852" class="Argument">f⁻¹</a> <a id="11856" class="Symbol">=</a> <a id="11858" href="simple_essence.html#10854" class="Function">a⊸§←a</a><a id="11863" class="Symbol">}</a>
+      <a id="11871" class="Symbol">(</a> <a id="11873" class="Symbol">(λ</a> <a id="11876" class="Symbol">{</a><a id="11877" href="simple_essence.html#11877" class="Bound">x</a> <a id="11879" class="Symbol">→</a> <a id="11881" href="Relation.Binary.PropositionalEquality.Core.html#2517" class="Function Operator">begin</a>
+                  <a id="11905" href="simple_essence.html#10555" class="Function">a⊸§→a</a> <a id="11911" class="Symbol">(</a><a id="11912" href="simple_essence.html#10854" class="Function">a⊸§←a</a> <a id="11918" href="simple_essence.html#11877" class="Bound">x</a><a id="11919" class="Symbol">)</a>
+                <a id="11937" href="Relation.Binary.PropositionalEquality.Core.html#2575" class="Function Operator">≡⟨⟩</a>
+                  <a id="11959" href="simple_essence.html#10555" class="Function">a⊸§→a</a> <a id="11965" class="Symbol">(</a><a id="11966" href="simple_essence.html#8033" class="InductiveConstructor">mkLM</a> <a id="11971" class="Symbol">(</a><a id="11972" href="simple_essence.html#11877" class="Bound">x</a> <a id="11974" href="simple_essence.html#9792" class="Field Operator">⊙_</a><a id="11976" class="Symbol">)</a> <a id="11978" href="simple_essence.html#9870" class="Field">⊙-distrib-+</a> <a id="11990" href="simple_essence.html#10001" class="Field">⊙-comm-·</a><a id="11998" class="Symbol">)</a>
+                <a id="12016" href="Relation.Binary.PropositionalEquality.Core.html#2575" class="Function Operator">≡⟨⟩</a>
+                  <a id="12038" href="Data.List.Base.html#3726" class="Function">foldl</a> <a id="12044" class="Symbol">(λ</a> <a id="12047" href="simple_essence.html#12047" class="Bound">acc</a> <a id="12051" href="simple_essence.html#12051" class="Bound">v</a> <a id="12053" class="Symbol">→</a> <a id="12055" href="simple_essence.html#12047" class="Bound">acc</a> <a id="12059" href="simple_essence.html#7287" class="Field Operator">+</a> <a id="12061" class="Symbol">(</a><a id="12062" href="simple_essence.html#11877" class="Bound">x</a> <a id="12064" href="simple_essence.html#9792" class="Field Operator">⊙</a> <a id="12066" href="simple_essence.html#12051" class="Bound">v</a><a id="12067" class="Symbol">)</a> <a id="12069" href="simple_essence.html#7133" class="Field Operator">·</a> <a id="12071" href="simple_essence.html#12051" class="Bound">v</a><a id="12072" class="Symbol">)</a> <a id="12074" href="simple_essence.html#7343" class="Field">𝟘</a> <a id="12076" href="simple_essence.html#9767" class="Field">basisSet</a>
+                <a id="12101" href="Relation.Binary.PropositionalEquality.Core.html#2634" class="Function">≡⟨</a> <a id="12104" href="simple_essence.html#11155" class="Postulate">x·z≡y·z→x≡y</a> <a id="12116" href="simple_essence.html#10126" class="Field">orthonormal</a> <a id="12128" href="Relation.Binary.PropositionalEquality.Core.html#2634" class="Function">⟩</a>
+                  <a id="12148" href="simple_essence.html#11877" class="Bound">x</a>
+                <a id="12166" href="Relation.Binary.PropositionalEquality.Core.html#2816" class="Function Operator">∎</a><a id="12167" class="Symbol">})</a>
+      <a id="12176" href="Agda.Builtin.Sigma.html#236" class="InductiveConstructor Operator">,</a> <a id="12178" class="Symbol">λ</a> <a id="12180" class="Symbol">{</a><a id="12181" href="simple_essence.html#12181" class="Bound">lm</a> <a id="12184" class="Symbol">→</a> <a id="12186" href="Relation.Binary.PropositionalEquality.Core.html#2517" class="Function Operator">begin</a>
+                    <a id="12212" href="simple_essence.html#10854" class="Function">a⊸§←a</a> <a id="12218" class="Symbol">(</a><a id="12219" href="simple_essence.html#10555" class="Function">a⊸§→a</a> <a id="12225" href="simple_essence.html#12181" class="Bound">lm</a><a id="12227" class="Symbol">)</a>
+                  <a id="12247" href="Relation.Binary.PropositionalEquality.Core.html#2575" class="Function Operator">≡⟨⟩</a>
+                    <a id="12271" href="simple_essence.html#10854" class="Function">a⊸§←a</a> <a id="12277" class="Symbol">(</a><a id="12278" href="Data.List.Base.html#3726" class="Function">foldl</a> <a id="12284" class="Symbol">(λ</a> <a id="12287" href="simple_essence.html#12287" class="Bound">acc</a> <a id="12291" href="simple_essence.html#12291" class="Bound">v</a> <a id="12293" class="Symbol">→</a>
+                                     <a id="12332" href="simple_essence.html#12287" class="Bound">acc</a> <a id="12336" href="simple_essence.html#7287" class="Field Operator">+</a> <a id="12338" class="Symbol">(</a><a id="12339" href="simple_essence.html#8050" class="Field">LinMap.f</a> <a id="12348" href="simple_essence.html#12181" class="Bound">lm</a> <a id="12351" href="simple_essence.html#12291" class="Bound">v</a><a id="12352" class="Symbol">)</a> <a id="12354" href="simple_essence.html#7133" class="Field Operator">·</a> <a id="12356" href="simple_essence.html#12291" class="Bound">v</a><a id="12357" class="Symbol">)</a> <a id="12359" href="simple_essence.html#7343" class="Field">𝟘</a> <a id="12361" href="simple_essence.html#9767" class="Field">basisSet</a><a id="12369" class="Symbol">)</a>
+                  <a id="12389" href="Relation.Binary.PropositionalEquality.Core.html#2575" class="Function Operator">≡⟨⟩</a>
+                    <a id="12413" href="simple_essence.html#8033" class="InductiveConstructor">mkLM</a> <a id="12418" class="Symbol">(</a> <a id="12420" href="Data.List.Base.html#3726" class="Function">foldl</a> <a id="12426" class="Symbol">(</a> <a id="12428" class="Symbol">λ</a> <a id="12430" href="simple_essence.html#12430" class="Bound">acc</a> <a id="12434" href="simple_essence.html#12434" class="Bound">v</a> <a id="12436" class="Symbol">→</a>
+                                     <a id="12475" href="simple_essence.html#12430" class="Bound">acc</a> <a id="12479" href="simple_essence.html#7287" class="Field Operator">+</a> <a id="12481" class="Symbol">(</a><a id="12482" href="simple_essence.html#8050" class="Field">LinMap.f</a> <a id="12491" href="simple_essence.html#12181" class="Bound">lm</a> <a id="12494" href="simple_essence.html#12434" class="Bound">v</a><a id="12495" class="Symbol">)</a> <a id="12497" href="simple_essence.html#7133" class="Field Operator">·</a> <a id="12499" href="simple_essence.html#12434" class="Bound">v</a>
+                                 <a id="12534" class="Symbol">)</a> <a id="12536" href="simple_essence.html#7343" class="Field">𝟘</a> <a id="12538" href="simple_essence.html#9767" class="Field">basisSet</a>
+                           <a id="12574" href="simple_essence.html#9792" class="Field Operator">⊙_</a>
+                         <a id="12602" class="Symbol">)</a> <a id="12604" href="simple_essence.html#9870" class="Field">⊙-distrib-+</a> <a id="12616" href="simple_essence.html#10001" class="Field">⊙-comm-·</a>
+                  <a id="12643" href="Relation.Binary.PropositionalEquality.Core.html#2634" class="Function">≡⟨</a> <a id="12646" href="simple_essence.html#8372" class="Postulate">⊸≡</a> <a id="12649" class="Symbol">(</a> <a id="12651" href="simple_essence.html#6434" class="Postulate">extensionality</a>
+                            <a id="12694" class="Symbol">(</a> <a id="12696" class="Symbol">λ</a> <a id="12698" href="simple_essence.html#12698" class="Bound">x</a> <a id="12700" class="Symbol">→</a> <a id="12702" href="simple_essence.html#10126" class="Field">orthonormal</a> <a id="12714" class="Symbol">{</a><a id="12715" class="Argument">f</a> <a id="12717" class="Symbol">=</a> <a id="12719" href="simple_essence.html#8050" class="Field">LinMap.f</a> <a id="12728" href="simple_essence.html#12181" class="Bound">lm</a><a id="12730" class="Symbol">}</a> <a id="12732" class="Symbol">{</a><a id="12733" class="Argument">x</a> <a id="12735" class="Symbol">=</a> <a id="12737" href="simple_essence.html#12698" class="Bound">x</a><a id="12738" class="Symbol">}</a> <a id="12740" class="Symbol">)</a>
+                        <a id="12766" class="Symbol">)</a>
+                   <a id="12787" href="Relation.Binary.PropositionalEquality.Core.html#2634" class="Function">⟩</a>
+                    <a id="12809" href="simple_essence.html#12181" class="Bound">lm</a>
+                  <a id="12830" href="Relation.Binary.PropositionalEquality.Core.html#2816" class="Function Operator">∎</a><a id="12831" class="Symbol">}</a>
+      <a id="12839" class="Symbol">)</a>
 
 </pre>
 ### Stashed
 
 Stashed coding attempts.
 
-<pre class="Agda"><a id="12900" class="Comment">-- This, done in response to Conal&#39;s suggestion of using `Equivalence`, instead of</a>
-<a id="12983" class="Comment">-- `Equality`, compiles fine but seems too easy and too weak.</a>
-<a id="13045" class="Comment">-- There&#39;s no guarantee of returning back where we started after a double pass, for instance.</a>
-<a id="13139" class="Comment">-- I think that I didn&#39;t fully grok the hint he was giving me.</a>
-<a id="13202" class="Comment">--</a>
-<a id="13205" class="Comment">-- a⊸§⇔a : {A : Set a}</a>
-<a id="13228" class="Comment">--         ⦃_ : Additive A⦄ ⦃_ : Scalable A⦄</a>
-<a id="13273" class="Comment">--         ⦃_ : VectorSpace A⦄</a>
-<a id="13304" class="Comment">--         -------------------------------------</a>
-<a id="13353" class="Comment">--       → (LinMap A §) ⇔ A</a>
-<a id="13381" class="Comment">-- a⊸§⇔a {A} = mk⇔ a⊸§→a a⊸§←a</a>
+<pre class="Agda"><a id="12894" class="Comment">-- This, done in response to Conal&#39;s suggestion of using `Equivalence`, instead of</a>
+<a id="12977" class="Comment">-- `Equality`, compiles fine but seems too easy and too weak.</a>
+<a id="13039" class="Comment">-- There&#39;s no guarantee of returning back where we started after a double pass, for instance.</a>
+<a id="13133" class="Comment">-- I think that I didn&#39;t fully grok the hint he was giving me.</a>
+<a id="13196" class="Comment">--</a>
+<a id="13199" class="Comment">-- a⊸§⇔a : {A : Set a}</a>
+<a id="13222" class="Comment">--         ⦃_ : Additive A⦄ ⦃_ : Scalable A⦄</a>
+<a id="13267" class="Comment">--         ⦃_ : VectorSpace A⦄</a>
+<a id="13298" class="Comment">--         -------------------------------------</a>
+<a id="13347" class="Comment">--       → (LinMap A §) ⇔ A</a>
+<a id="13375" class="Comment">-- a⊸§⇔a {A} = mk⇔ a⊸§→a a⊸§←a</a>
 
-<a id="13413" class="Comment">-- -- f(0) = 0</a>
-<a id="13428" class="Comment">-- zero-lin : {A B : Set a}</a>
-<a id="13456" class="Comment">--           ⦃ _ : Additive A ⦄ ⦃ _ : Additive B ⦄</a>
-<a id="13507" class="Comment">--           ⦃ _ : Scalable A ⦄ ⦃ _ : Scalable B ⦄</a>
-<a id="13558" class="Comment">--           ⦃ _ : LinMap A B ⦄</a>
+<a id="13407" class="Comment">-- -- f(0) = 0</a>
+<a id="13422" class="Comment">-- zero-lin : {A B : Set a}</a>
+<a id="13450" class="Comment">--           ⦃ _ : Additive A ⦄ ⦃ _ : Additive B ⦄</a>
+<a id="13501" class="Comment">--           ⦃ _ : Scalable A ⦄ ⦃ _ : Scalable B ⦄</a>
+<a id="13552" class="Comment">--           ⦃ _ : LinMap A B ⦄</a>
 
-<a id="13591" class="Comment">-- -- Injectivity of linear function</a>
-<a id="13628" class="Comment">-- inj-lin : {A B : Set a} {x y : A}</a>
-<a id="13665" class="Comment">--           ⦃ _ : Additive A ⦄ ⦃ _ : Additive B ⦄</a>
-<a id="13716" class="Comment">--           ⦃ _ : Scalable A ⦄ ⦃ _ : Scalable B ⦄</a>
-<a id="13767" class="Comment">--           ⦃ _ : LinMap A B ⦄</a>
-<a id="13799" class="Comment">--        → LinMap.f _ x ≡ LinMap.f _ y</a>
-<a id="13839" class="Comment">--           ---------------------------</a>
-<a id="13880" class="Comment">--        → x ≡ y</a>
-<a id="13898" class="Comment">-- inj-lin {x = x} {y = y} fx≡fy =</a>
-<a id="13933" class="Comment">--   let f = LinMap.f _</a>
-<a id="13957" class="Comment">--    in begin</a>
-<a id="13972" class="Comment">--         x</a>
-<a id="13985" class="Comment">--       ≡⟨⟩</a>
-<a id="13998" class="Comment">--         f (x - y)</a>
-<a id="14019" class="Comment">--       ≡⟨ LinMap.adds _ ⟩</a>
-<a id="14047" class="Comment">--         f x - f y</a>
-<a id="14068" class="Comment">--       ≡⟨ sub-≡ fx≡fy ⟩</a>
-<a id="14094" class="Comment">--         0</a>
-<a id="14107" class="Comment">--       ≡⟨⟩</a>
-<a id="14120" class="Comment">--         y</a>
-<a id="14133" class="Comment">--       ∎</a>
+<a id="13585" class="Comment">-- -- Injectivity of linear function</a>
+<a id="13622" class="Comment">-- inj-lin : {A B : Set a} {x y : A}</a>
+<a id="13659" class="Comment">--           ⦃ _ : Additive A ⦄ ⦃ _ : Additive B ⦄</a>
+<a id="13710" class="Comment">--           ⦃ _ : Scalable A ⦄ ⦃ _ : Scalable B ⦄</a>
+<a id="13761" class="Comment">--           ⦃ _ : LinMap A B ⦄</a>
+<a id="13793" class="Comment">--        → LinMap.f _ x ≡ LinMap.f _ y</a>
+<a id="13833" class="Comment">--           ---------------------------</a>
+<a id="13874" class="Comment">--        → x ≡ y</a>
+<a id="13892" class="Comment">-- inj-lin {x = x} {y = y} fx≡fy =</a>
+<a id="13927" class="Comment">--   let f = LinMap.f _</a>
+<a id="13951" class="Comment">--    in begin</a>
+<a id="13966" class="Comment">--         x</a>
+<a id="13979" class="Comment">--       ≡⟨⟩</a>
+<a id="13992" class="Comment">--         f (x - y)</a>
+<a id="14013" class="Comment">--       ≡⟨ LinMap.adds _ ⟩</a>
+<a id="14041" class="Comment">--         f x - f y</a>
+<a id="14062" class="Comment">--       ≡⟨ sub-≡ fx≡fy ⟩</a>
+<a id="14088" class="Comment">--         0</a>
+<a id="14101" class="Comment">--       ≡⟨⟩</a>
+<a id="14114" class="Comment">--         y</a>
+<a id="14127" class="Comment">--       ∎</a>
       
-<a id="14151" class="Comment">-- cong-app′ : ∀ {A : Set a} {B : Set b} {f : A → B} {x y : A}</a>
-<a id="14214" class="Comment">--          → f x ≡ f y</a>
-<a id="14238" class="Comment">--             ---------</a>
-<a id="14263" class="Comment">--          → x ≡ y</a>
-<a id="14283" class="Comment">-- cong-app′ fx≡fy = {!contraposition!}</a>
+<a id="14145" class="Comment">-- cong-app′ : ∀ {A : Set a} {B : Set b} {f : A → B} {x y : A}</a>
+<a id="14208" class="Comment">--          → f x ≡ f y</a>
+<a id="14232" class="Comment">--             ---------</a>
+<a id="14257" class="Comment">--          → x ≡ y</a>
+<a id="14277" class="Comment">-- cong-app′ fx≡fy = {!contraposition!}</a>
          
-<a id="14333" class="Comment">-- x·z≡y·z→x≡y : {A : Set a}</a>
-<a id="14362" class="Comment">--                ⦃ _ : Additive A ⦄ ⦃ _ : Scalable A ⦄</a>
-<a id="14418" class="Comment">--                ⦃ _ : VectorSpace A ⦄ ⦃ _ : LinMap A § ⦄</a>
-<a id="14477" class="Comment">--                {x y : A}</a>
-<a id="14505" class="Comment">--             → (∀ {z : A} → x · z ≡ y · z)</a>
-<a id="14550" class="Comment">--                ------------------------------------------------------------</a>
-<a id="14629" class="Comment">--             → x ≡ y</a>
-<a id="14652" class="Comment">-- x·z≡y·z→x≡y {x = x} {y = y} g =</a>
-<a id="14687" class="Comment">--   let f = LinMap.f _</a>
-<a id="14711" class="Comment">--       z = foldl (λ acc v → acc ⊕ f v ⊛ v) id⊕ basisSet</a>
-<a id="14769" class="Comment">--       x·z≡y·z = g {z}</a>
-<a id="14794" class="Comment">--    in cong-app refl {!!}</a>
-<a id="14822" class="Comment">--    -- in begin</a>
-<a id="14840" class="Comment">--    --      -- ?</a>
-<a id="14859" class="Comment">--    --      x·z≡y·z</a>
-<a id="14881" class="Comment">--    --    -- ≡⟨ ? ⟩</a>
-<a id="14903" class="Comment">--    --    --   x · z ≡ y · z</a>
-<a id="14934" class="Comment">--    --    ≡⟨ ? ⟩</a>
-<a id="14953" class="Comment">--    --    -- ≡⟨ cong (_≡ y · z) comm-· ⟩</a>
-<a id="14996" class="Comment">--    --      z · x ≡ y · z</a>
-<a id="15024" class="Comment">--    --    ≡⟨ ? ⟩</a>
-<a id="15043" class="Comment">--    --    -- ≡⟨ cong (z · x ≡_) comm-· ⟩</a>
-<a id="15086" class="Comment">--    --      z · x ≡ z · y</a>
-<a id="15114" class="Comment">--    --    ≡⟨ ? ⟩</a>
-<a id="15133" class="Comment">--    --    -- ≡⟨ cong (_≡ z · y) (orthonormal) ⟩</a>
-<a id="15183" class="Comment">--    --      f x ≡ z · y</a>
-<a id="15209" class="Comment">--    --    ≡⟨ ? ⟩</a>
-<a id="15228" class="Comment">--    --    -- ≡⟨ cong (f x ≡_) (orthonormal) ⟩</a>
-<a id="15276" class="Comment">--    --      f x ≡ f y</a>
-<a id="15300" class="Comment">--    --    ≡⟨ ? ⟩</a>
-<a id="15319" class="Comment">--    --    -- ≡⟨ cong-app ⟩</a>
-<a id="15348" class="Comment">--    --      x ≡ y</a>
-<a id="15368" class="Comment">--    --    ∎</a>
+<a id="14327" class="Comment">-- x·z≡y·z→x≡y : {A : Set a}</a>
+<a id="14356" class="Comment">--                ⦃ _ : Additive A ⦄ ⦃ _ : Scalable A ⦄</a>
+<a id="14412" class="Comment">--                ⦃ _ : VectorSpace A ⦄ ⦃ _ : LinMap A § ⦄</a>
+<a id="14471" class="Comment">--                {x y : A}</a>
+<a id="14499" class="Comment">--             → (∀ {z : A} → x · z ≡ y · z)</a>
+<a id="14544" class="Comment">--                ------------------------------------------------------------</a>
+<a id="14623" class="Comment">--             → x ≡ y</a>
+<a id="14646" class="Comment">-- x·z≡y·z→x≡y {x = x} {y = y} g =</a>
+<a id="14681" class="Comment">--   let f = LinMap.f _</a>
+<a id="14705" class="Comment">--       z = foldl (λ acc v → acc ⊕ f v ⊛ v) id⊕ basisSet</a>
+<a id="14763" class="Comment">--       x·z≡y·z = g {z}</a>
+<a id="14788" class="Comment">--    in cong-app refl {!!}</a>
+<a id="14816" class="Comment">--    -- in begin</a>
+<a id="14834" class="Comment">--    --      -- ?</a>
+<a id="14853" class="Comment">--    --      x·z≡y·z</a>
+<a id="14875" class="Comment">--    --    -- ≡⟨ ? ⟩</a>
+<a id="14897" class="Comment">--    --    --   x · z ≡ y · z</a>
+<a id="14928" class="Comment">--    --    ≡⟨ ? ⟩</a>
+<a id="14947" class="Comment">--    --    -- ≡⟨ cong (_≡ y · z) comm-· ⟩</a>
+<a id="14990" class="Comment">--    --      z · x ≡ y · z</a>
+<a id="15018" class="Comment">--    --    ≡⟨ ? ⟩</a>
+<a id="15037" class="Comment">--    --    -- ≡⟨ cong (z · x ≡_) comm-· ⟩</a>
+<a id="15080" class="Comment">--    --      z · x ≡ z · y</a>
+<a id="15108" class="Comment">--    --    ≡⟨ ? ⟩</a>
+<a id="15127" class="Comment">--    --    -- ≡⟨ cong (_≡ z · y) (orthonormal) ⟩</a>
+<a id="15177" class="Comment">--    --      f x ≡ z · y</a>
+<a id="15203" class="Comment">--    --    ≡⟨ ? ⟩</a>
+<a id="15222" class="Comment">--    --    -- ≡⟨ cong (f x ≡_) (orthonormal) ⟩</a>
+<a id="15270" class="Comment">--    --      f x ≡ f y</a>
+<a id="15294" class="Comment">--    --    ≡⟨ ? ⟩</a>
+<a id="15313" class="Comment">--    --    -- ≡⟨ cong-app ⟩</a>
+<a id="15342" class="Comment">--    --      x ≡ y</a>
+<a id="15362" class="Comment">--    --    ∎</a>
 
-<a id="15383" class="Comment">-- -- So, how was Agsy able to jump over all of that?</a>
-<a id="15437" class="Comment">-- -- My usual experience w/ Agsy is that when I ask it to solve anything</a>
-<a id="15511" class="Comment">-- -- non-trivial by itself it always complains, &quot;Sorry, I don&#39;t support</a>
-<a id="15584" class="Comment">-- -- literals, yet.&quot;, which I&#39;ve never understood.</a>
+<a id="15377" class="Comment">-- -- So, how was Agsy able to jump over all of that?</a>
+<a id="15431" class="Comment">-- -- My usual experience w/ Agsy is that when I ask it to solve anything</a>
+<a id="15505" class="Comment">-- -- non-trivial by itself it always complains, &quot;Sorry, I don&#39;t support</a>
+<a id="15578" class="Comment">-- -- literals, yet.&quot;, which I&#39;ve never understood.</a>
 
-<a id="15637" class="Comment">-- a⊸§↔a : {A : Set a}</a>
-<a id="15660" class="Comment">--          ⦃ _ : Additive A ⦄ ⦃ _ : Scalable A ⦄</a>
-<a id="15710" class="Comment">--          ⦃ _ : VectorSpace A ⦄ ⦃ _ : LinMap A § ⦄</a>
-<a id="15763" class="Comment">--          -----------------------------------------</a>
-<a id="15817" class="Comment">--       → (LinMap A §) ↔ A</a>
-<a id="15845" class="Comment">-- a⊸§↔a {A} =</a>
-<a id="15860" class="Comment">--   mk↔ {f = a⊸§→a} {f⁻¹ = a⊸§←a}</a>
-<a id="15895" class="Comment">--       ( (λ {x → begin</a>
-<a id="15920" class="Comment">--                   a⊸§→a (a⊸§←a x)</a>
-<a id="15957" class="Comment">--                 ≡⟨⟩</a>
-<a id="15980" class="Comment">--                   a⊸§→a (mkLM (x ·_) ·-distrib-⊕ ·-comm-⊛)</a>
-<a id="16042" class="Comment">--                 ≡⟨⟩</a>
-<a id="16065" class="Comment">--                   foldl (λ acc v → acc ⊕ (x · v) ⊛ v) id⊕ basisSet</a>
-<a id="16135" class="Comment">--                 ≡⟨ x·z≡y·z→x≡y (orthonormal {f = (x ·_)}) ⟩</a>
-<a id="16198" class="Comment">--                   x</a>
-<a id="16221" class="Comment">--                 ∎})</a>
-<a id="16244" class="Comment">--       , λ {lm → begin</a>
-<a id="16269" class="Comment">--                   a⊸§←a (a⊸§→a lm)</a>
-<a id="16307" class="Comment">--                 ≡⟨⟩</a>
-<a id="16330" class="Comment">--                   a⊸§←a (foldl (λ acc v → acc ⊕ (LinMap.f lm v) ⊛ v) id⊕ basisSet)</a>
-<a id="16416" class="Comment">--                 ≡⟨⟩</a>
-<a id="16439" class="Comment">--                   mkLM ((foldl (λ acc v → acc ⊕ (LinMap.f lm v) ⊛ v) id⊕ basisSet)·_)</a>
-<a id="16528" class="Comment">--                        ·-distrib-⊕ ·-comm-⊛</a>
-<a id="16575" class="Comment">--                 ≡⟨ ⊸≡ ( extensionality</a>
-<a id="16617" class="Comment">--                           ( λ x → orthonormal {f = LinMap.f lm} {x = x} )</a>
-<a id="16694" class="Comment">--                       )</a>
-<a id="16721" class="Comment">--                  ⟩</a>
-<a id="16743" class="Comment">--                   lm</a>
-<a id="16767" class="Comment">--                 ∎}</a>
-<a id="16789" class="Comment">--       )</a>
+<a id="15631" class="Comment">-- a⊸§↔a : {A : Set a}</a>
+<a id="15654" class="Comment">--          ⦃ _ : Additive A ⦄ ⦃ _ : Scalable A ⦄</a>
+<a id="15704" class="Comment">--          ⦃ _ : VectorSpace A ⦄ ⦃ _ : LinMap A § ⦄</a>
+<a id="15757" class="Comment">--          -----------------------------------------</a>
+<a id="15811" class="Comment">--       → (LinMap A §) ↔ A</a>
+<a id="15839" class="Comment">-- a⊸§↔a {A} =</a>
+<a id="15854" class="Comment">--   mk↔ {f = a⊸§→a} {f⁻¹ = a⊸§←a}</a>
+<a id="15889" class="Comment">--       ( (λ {x → begin</a>
+<a id="15914" class="Comment">--                   a⊸§→a (a⊸§←a x)</a>
+<a id="15951" class="Comment">--                 ≡⟨⟩</a>
+<a id="15974" class="Comment">--                   a⊸§→a (mkLM (x ·_) ·-distrib-⊕ ·-comm-⊛)</a>
+<a id="16036" class="Comment">--                 ≡⟨⟩</a>
+<a id="16059" class="Comment">--                   foldl (λ acc v → acc ⊕ (x · v) ⊛ v) id⊕ basisSet</a>
+<a id="16129" class="Comment">--                 ≡⟨ x·z≡y·z→x≡y (orthonormal {f = (x ·_)}) ⟩</a>
+<a id="16192" class="Comment">--                   x</a>
+<a id="16215" class="Comment">--                 ∎})</a>
+<a id="16238" class="Comment">--       , λ {lm → begin</a>
+<a id="16263" class="Comment">--                   a⊸§←a (a⊸§→a lm)</a>
+<a id="16301" class="Comment">--                 ≡⟨⟩</a>
+<a id="16324" class="Comment">--                   a⊸§←a (foldl (λ acc v → acc ⊕ (LinMap.f lm v) ⊛ v) id⊕ basisSet)</a>
+<a id="16410" class="Comment">--                 ≡⟨⟩</a>
+<a id="16433" class="Comment">--                   mkLM ((foldl (λ acc v → acc ⊕ (LinMap.f lm v) ⊛ v) id⊕ basisSet)·_)</a>
+<a id="16522" class="Comment">--                        ·-distrib-⊕ ·-comm-⊛</a>
+<a id="16569" class="Comment">--                 ≡⟨ ⊸≡ ( extensionality</a>
+<a id="16611" class="Comment">--                           ( λ x → orthonormal {f = LinMap.f lm} {x = x} )</a>
+<a id="16688" class="Comment">--                       )</a>
+<a id="16715" class="Comment">--                  ⟩</a>
+<a id="16737" class="Comment">--                   lm</a>
+<a id="16761" class="Comment">--                 ∎}</a>
+<a id="16783" class="Comment">--       )</a>
 
 
 </pre>
