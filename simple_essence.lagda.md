@@ -167,7 +167,9 @@ variable
   ℓ₁ ℓ₂ ℓ₃ : Level
   
 postulate
-  extensionality : Extensionality ℓ₁ ℓ₂
+  extensionality  : Extensionality ℓ₁ ℓ₂
+  excluded-middle : ∀ {A : Set ℓ₁} → ¬ (¬ A) ≡ A
+  ≡-involutive    : ∀ {A : Set ℓ₁} → {x y : A} → ¬ (x ≢ y) → x ≡ y
 
 ```
 
@@ -180,12 +182,6 @@ We use a slight variation on the approach taken in the standard library "bundles
 We've kept `Scalable`, for now, in order to get some incremental progress working and checked in before attempting to use `Module` and friends.
 
 ```agda
-record Scalable (T : Set ℓ₁) (A : Set ℓ₁) : Set (Level.suc ℓ₁) where
-  infix 7 _·_
-  field
-    _·_ : A → T → T
-open Scalable ⦃ ... ⦄ public
-
 record Ring (A : Set ℓ₁) : Set (Level.suc ℓ₁) where
   infixl 6 _+_
   infixl 7 _*_
@@ -194,18 +190,81 @@ record Ring (A : Set ℓ₁) : Set (Level.suc ℓ₁) where
     _+_ : A → A → A
     _*_ : A → A → A
     -_  : A → A
+    -‿involutive : {x : A} → - (- x) ≡ x
     𝟘   : A
     𝟙   : A
     ⦃ isRing ⦄ : IsRing _≡_ _+_ _*_ -_ 𝟘 𝟙
   open IsRing isRing public
-  instance
-    scalableRing : Scalable A A
-    scalableRing = record
-      { _·_ = _*_
-      }
-  open Scalable scalableRing
 open Ring ⦃ ... ⦄ public
     
+record Scalable (T : Set ℓ₁) (A : Set ℓ₁)
+                ⦃ _ : Ring A ⦄ ⦃ _ : Ring T ⦄
+                : Set (Level.suc ℓ₁) where
+  infix 7 _·_
+  field
+    _·_ : A → T → T
+    an𝟘ˡ : (v : T)
+           ---------
+        → 𝟘 · v ≡ 𝟘
+    an𝟘ʳ : (s : A)
+           ---------
+        → s · 𝟘 ≡ 𝟘
+    id𝟙 : (v : T)
+          ---------
+       → 𝟙 · v ≡ v
+open Scalable ⦃ ... ⦄ public
+
+record ScalableCont (T : Set ℓ₁) (A : Set ℓ₁)
+                    ⦃ _ : Ring A ⦄ ⦃ _ : Ring T ⦄ ⦃ _ : Scalable T A ⦄
+                    : Set (Level.suc ℓ₁) where
+  field
+    cont : ∀ (x y : T)
+        → Σ[ s ∈ A ] s · x ≡ y
+open ScalableCont ⦃ ... ⦄ public
+
+non-zeroˡ : {T A : Set ℓ₁} ⦃ _ : Ring T ⦄ ⦃ _ : Ring A ⦄
+            ⦃ _ : Scalable T A ⦄ {s : A} {v : T}
+         → s · v ≢ 𝟘
+            ---------
+         → s ≢ 𝟘
+non-zeroˡ {s = s} {v = v} s·v≢𝟘 = λ { s≡𝟘 →
+  let s·v≡𝟘 : s · v ≡ 𝟘
+      s·v≡𝟘 = begin
+                s · v
+              ≡⟨ cong (_· v) s≡𝟘 ⟩
+                𝟘 · v
+              ≡⟨ an𝟘ˡ v ⟩
+                𝟘
+              ∎
+   in s·v≢𝟘 s·v≡𝟘
+  }
+
+non-zeroʳ : {T A : Set ℓ₁} ⦃ _ : Ring T ⦄ ⦃ _ : Ring A ⦄
+            ⦃ _ : Scalable T A ⦄ {s : A} {v : T}
+         → s · v ≢ 𝟘
+            ---------
+         → v ≢ 𝟘
+non-zeroʳ {s = s} {v = v} s·v≢𝟘 = λ { v≡𝟘 →
+  let s·v≡𝟘 : s · v ≡ 𝟘
+      s·v≡𝟘 = begin
+                s · v
+              ≡⟨ cong (s ·_) v≡𝟘 ⟩
+                s · 𝟘
+              ≡⟨ an𝟘ʳ s ⟩
+                𝟘
+              ∎
+   in s·v≢𝟘 s·v≡𝟘
+  }
+
+instance
+  scalableRing : {A : Set ℓ₁} ⦃ _ : Ring A ⦄ → Scalable A A
+  scalableRing = record
+    { _·_  = _*_
+    ; an𝟘ˡ = λ {x → zeroˡ x}
+    ; an𝟘ʳ = λ {x → zeroʳ x}
+    ; id𝟙  = λ {x → *-identityˡ x}
+    }
+
 ```
 
 ### Linear Maps
@@ -216,9 +275,13 @@ We take the vector-centric definition offered by Conal in his paper:
 
 > A linear map is one that distributes over _vector_ addition and _scalar_ multiplication.
 
+We require our linear maps to be non-trivial (i.e. - `f ≢ const 𝟘`).
+If we don't do this here then we have to add an argument of the same type to many of the lemmas and proofs below.
+The loss of generality seems rather benign, in this case.
+
 ```agda
 record LinMap (A : Set ℓ₁) (B : Set ℓ₁) {§ : Set ℓ₁}
-              ⦃ _ : Ring A ⦄ ⦃ _ : Ring B ⦄
+              ⦃ _ : Ring A ⦄ ⦃ _ : Ring B ⦄ ⦃ _ : Ring § ⦄
               ⦃ _ : Scalable A § ⦄   ⦃ _ : Scalable B § ⦄
               : Set ℓ₁ where
   constructor mkLM
@@ -232,19 +295,186 @@ record LinMap (A : Set ℓ₁) (B : Set ℓ₁) {§ : Set ℓ₁}
     scales : ∀ {s : §} {a : A}
              -------------------
           → f (s · a) ≡ s · f a
+    -- nontrivial : Σ[ a ∈ A ] f a ≢ 𝟘
 
 open LinMap ⦃ ... ⦄ public
 
+```
+
+#### Equivalence of Linear Maps
+
+As per a helpful suggestion from Conal, we ignore the `adds` and `scales` fields when testing two linear maps for equivalence, comparing just their functions.
+Note that neither could've been constructed w/o `adds` and `scales` fields apropos to its `f` field.
+
+```agda
 -- As per Conal's advice:
 -- ⊸≈ = isEquivalence LinMap.f Eq.isEquivalence
 postulate
   ⊸≡ : {A : Set ℓ₁} {B : Set ℓ₁} {§ : Set ℓ₁}
-       ⦃ _ : Ring A ⦄ ⦃ _ : Ring B ⦄
+       ⦃ _ : Ring A ⦄ ⦃ _ : Ring B ⦄ ⦃ _ : Ring § ⦄
        ⦃ _ : Scalable A § ⦄ ⦃ _ : Scalable B § ⦄
        {lm₁ lm₂ : LinMap A B {§}}
     → LinMap.f lm₁ ≡ LinMap.f lm₂
        --------------------------
     → lm₁ ≡ lm₂
+
+```
+
+#### Axioms of Linearity
+
+Here we code up some well known axioms of linearity, for use in various lemmas and proofs below.
+
+```agda
+-- f(0) ≡ 0, for linear f
+f𝟘≡𝟘 : {A : Set ℓ₁} {B : Set ℓ₁} {§ : Set ℓ₁}
+       ⦃ ringA : Ring A ⦄ ⦃ ringB : Ring B ⦄ ⦃ ring§ : Ring § ⦄
+       ⦃ scalA§ : Scalable A § ⦄ ⦃ scalB§ : Scalable B § ⦄
+       ⦃ lmAB : LinMap A B {§} ⦄ {x : A}
+       ------------------------------------------
+    → f 𝟘 ≡ 𝟘
+f𝟘≡𝟘 {x = x} =
+  begin
+    f 𝟘
+  ≡⟨ cong f (Eq.sym (an𝟘ˡ x)) ⟩
+    f (𝟘 · x)
+  ≡⟨ scales ⟩
+    𝟘 · f x
+  ≡⟨ an𝟘ˡ (f x) ⟩
+    𝟘
+  ∎
+
+x≡𝟘→fx≡𝟘 : {A : Set ℓ₁} {B : Set ℓ₁} {§ : Set ℓ₁}
+            ⦃ _ : Ring A ⦄ ⦃ _ : Ring B ⦄ ⦃ _ : Ring § ⦄
+            ⦃ _ : Scalable A § ⦄ ⦃ _ : Scalable B § ⦄
+            ⦃ _ : LinMap A B {§} ⦄ {x : A}
+         → x ≡ 𝟘
+            -------
+         → f x ≡ 𝟘
+x≡𝟘→fx≡𝟘 {x = x} x≡𝟘 = begin
+                  f x
+                ≡⟨ cong f x≡𝟘 ⟩
+                  f 𝟘
+                ≡⟨ f𝟘≡𝟘 {x = x} ⟩
+                  𝟘
+                ∎
+           
+fx≢𝟘→x≢𝟘 : {A : Set ℓ₁} {B : Set ℓ₁} {§ : Set ℓ₁}
+            ⦃ _ : Ring A ⦄ ⦃ _ : Ring B ⦄ ⦃ _ : Ring § ⦄
+            ⦃ _ : Scalable A § ⦄ ⦃ _ : Scalable B § ⦄
+            ⦃ _ : LinMap A B {§} ⦄ {x : A}
+         → f x ≢ 𝟘
+            -------
+         → x ≢ 𝟘
+fx≢𝟘→x≢𝟘 = contraposition x≡𝟘→fx≡𝟘
+
+-- Zero is unique output of linear map ≢ `const 𝟘`.
+zero-unique : {A : Set ℓ₁} {B : Set ℓ₁} {§ : Set ℓ₁}
+              ⦃ _ : Ring A ⦄ ⦃ _ : Ring B ⦄ ⦃ _ : Ring § ⦄
+              ⦃ _ : Scalable A § ⦄ ⦃ _ : Scalable B § ⦄
+              ⦃ _ : LinMap A B {§} ⦄ ⦃ _ : ScalableCont A § ⦄
+              {x : A}
+           → Σ[ y ∈ A ] f y ≢ 𝟘
+           → x ≢ 𝟘
+              ------------------
+           → f x ≢ 𝟘
+zero-unique {§ = §} {x = x} (y , fy≢𝟘) x≢𝟘 =
+  let y≢𝟘 : y ≢ 𝟘
+      y≢𝟘 = fx≢𝟘→x≢𝟘 fy≢𝟘
+      Σs→s·x≡y : Σ[ s ∈ § ] s · x ≡ y
+      Σs→s·x≡y = cont x y
+      Σs→fs·x≡fy : Σ[ s ∈ § ] f (s · x) ≡ f y
+      Σs→fs·x≡fy = let (s , g) = Σs→s·x≡y
+                     in (s , cong f g)
+      Σs→s·fx≡fy : Σ[ s ∈ § ] s · f x ≡ f y
+      Σs→s·fx≡fy = let (s , g) = Σs→fs·x≡fy
+                     in (s , (begin
+                               s · f x
+                             ≡⟨ Eq.sym scales ⟩
+                               f (s · x)
+                             ≡⟨ g ⟩
+                               f y
+                             ∎))
+      s·fx≢𝟘 : Σ[ s ∈ § ] s · f x ≢ 𝟘
+      s·fx≢𝟘 = let (s , g) = Σs→s·fx≡fy
+                in (s , λ s·fx≡𝟘 → fy≢𝟘 (step-≡ (f y) s·fx≡𝟘 (Eq.sym g)))
+   in non-zeroʳ (snd s·fx≢𝟘)
+
+-- ToDo: Can I prove this?
+-- postulate
+fx≡𝟘→x≡𝟘 : {A : Set ℓ₁} {B : Set ℓ₁} {§ : Set ℓ₁}
+            ⦃ _ : Ring A ⦄ ⦃ _ : Ring B ⦄ ⦃ _ : Ring § ⦄
+            ⦃ _ : Scalable A § ⦄ ⦃ _ : Scalable B § ⦄
+            ⦃ _ : LinMap A B {§} ⦄ ⦃ _ : ScalableCont A § ⦄
+            {x : A}
+         → Σ[ y ∈ A ] f y ≢ 𝟘
+         → f x ≡ 𝟘
+            -------
+         → x ≡ 𝟘
+fx≡𝟘→x≡𝟘 {x = x} Σ[y]fy≢𝟘 fx≡𝟘 =
+  let x≡𝟘 : ¬ (x ≢ 𝟘)
+      x≡𝟘 = λ x≢𝟘 → zero-unique Σ[y]fy≢𝟘 x≢𝟘 fx≡𝟘
+   in ≡-involutive x≡𝟘
+
+  
+-- f (-x) ≡ - (f x)
+fx+f-x≡𝟘 : {A : Set ℓ₁} {B : Set ℓ₁} {§ : Set ℓ₁}
+           ⦃ _ : Ring A ⦄ ⦃ _ : Ring B ⦄ ⦃ _ : Ring § ⦄
+           ⦃ _ : Scalable A § ⦄ ⦃ _ : Scalable B § ⦄
+           ⦃ _ : LinMap A B {§} ⦄ {x : A}
+           -----------------
+        → f x + f (- x) ≡ 𝟘
+fx+f-x≡𝟘 {x = x} = begin
+             f x + f (- x)
+           ≡⟨ Eq.sym adds ⟩
+             f (x - x)
+           ≡⟨ cong f (-‿inverseʳ x) ⟩
+             f 𝟘
+           ≡⟨ f𝟘≡𝟘 {x = x} ⟩
+             𝟘
+           ∎
+
+f-x≡-fx : {A : Set ℓ₁} {B : Set ℓ₁} {§ : Set ℓ₁}
+          ⦃ _ : Ring A ⦄ ⦃ _ : Ring B ⦄ ⦃ _ : Ring § ⦄
+          ⦃ _ : Scalable A § ⦄ ⦃ _ : Scalable B § ⦄
+          ⦃ _ : LinMap A B {§} ⦄ {x : A}
+          -----------------
+       → f (- x) ≡ - (f x)
+f-x≡-fx {x = x} = uniqueʳ-⁻¹ (f x) (f (- x)) fx+f-x≡𝟘
+
+-- A linear function is injective.
+inj-lm : {A : Set ℓ₁} {B : Set ℓ₁} {§ : Set ℓ₁}
+         ⦃ _ : Ring A ⦄ ⦃ _ : Ring B ⦄ ⦃ _ : Ring § ⦄
+         ⦃ _ : Scalable A § ⦄ ⦃ _ : Scalable B § ⦄
+         ⦃ _ : LinMap A B {§} ⦄ ⦃ _ : ScalableCont A § ⦄
+         {x y : A}
+      → Σ[ y ∈ A ] f y ≢ 𝟘
+      → f x ≡ f y
+         ------------------
+      → x ≡ y
+inj-lm {x = x} {y = y} Σ[y]fy≢𝟘 fx≡fy =
+  let fx-fy≡𝟘 : f x + - f y ≡ 𝟘
+      fx-fy≡𝟘 = begin
+                  f x + - f y
+                ≡⟨ cong (f x +_) (cong -_ (Eq.sym fx≡fy)) ⟩
+                  f x + - f x
+                ≡⟨ -‿inverseʳ (f x) ⟩
+                  𝟘
+                ∎
+      fx-y≡𝟘 : f (x + - y) ≡ 𝟘
+      fx-y≡𝟘 = begin
+                   f (x + - y)
+                 ≡⟨ adds ⟩
+                   f x + f (- y)
+                 ≡⟨ cong (f x +_) f-x≡-fx ⟩
+                   f x + - f y
+                 ≡⟨ fx-fy≡𝟘 ⟩
+                   𝟘
+                 ∎
+      x-y≡𝟘 : x - y ≡ 𝟘
+      x-y≡𝟘 = fx≡𝟘→x≡𝟘 {x = x - y} Σ[y]fy≢𝟘 fx-y≡𝟘
+      x≡--y : x ≡ - (- y)
+      x≡--y = uniqueˡ-⁻¹ x (- y) x-y≡𝟘
+   in step-≡ x -‿involutive x≡--y
 
 ```
 
@@ -264,6 +494,9 @@ Scalar Multiplication
 
 Inner Product
 :   We can combine two vectors, producing a single value of the carrier type.
+
+We define the "norm" of a vector as the reflexive inner product:
+$|v| = v ⊙ v$.
 
 **Note:** The remaining definitions in the code below were the result of attempting to solve the first isomorphism.
 
@@ -293,7 +526,32 @@ record VectorSpace
                → ( foldl (λ acc v → acc + (f v) · v)
                           𝟘 basisSet
                   ) ⊙ x ≡ f x
+    comm-⊙      : ∀ {a b : T}
+                  -------------
+               → a ⊙ b ≡ b ⊙ a
 open VectorSpace ⦃ ... ⦄ public
+
+x·z≡y·z→x≡y : {T : Set ℓ₁} {A : Set ℓ₁}
+               ⦃ _ : Ring T ⦄ ⦃ _ : Ring A ⦄
+               ⦃ _ : Scalable T A ⦄ ⦃ _ : ScalableCont T A ⦄
+               ⦃ _ : VectorSpace T A ⦄ ⦃ _ : LinMap T A ⦄
+               {x y : T}
+           → Σ[ y ∈ T ] f y ≢ 𝟘
+           →  (∀ {z : T} → x ⊙ z ≡ y ⊙ z)
+               ----------------------------
+           →  x ≡ y
+x·z≡y·z→x≡y {x = x} {y = y} Σ[y]fy≢𝟘 g =
+  let z = foldl (λ acc v → acc + f v · v) 𝟘 basisSet
+      x·z≡y·z = g {z}
+      z·x≡y·z : z ⊙ x ≡ y ⊙ z
+      z·x≡y·z = step-≡ (z ⊙ x) x·z≡y·z comm-⊙
+      z·x≡z·y : z ⊙ x ≡ z ⊙ y
+      z·x≡z·y = Eq.sym (step-≡ (z ⊙ y) (Eq.sym z·x≡y·z) comm-⊙)
+      fx≡z·y : f x ≡ z ⊙ y
+      fx≡z·y = step-≡ (f x) z·x≡z·y (Eq.sym orthonormal)
+      fx≡fy : f x ≡ f y
+      fx≡fy = Eq.sym (step-≡ (f y) (Eq.sym fx≡z·y) (Eq.sym orthonormal))
+   in inj-lm Σ[y]fy≢𝟘 fx≡fy
 
 ```
 
@@ -319,25 +577,14 @@ a⊸§←a : {T : Set ℓ₁} {A : Set ℓ₁}
       → T → LinMap T A {A}
 a⊸§←a = λ { a → mkLM (a ⊙_) ⊙-distrib-+ ⊙-comm-· }
 
--- Danger, Will Robinson!
-postulate
-  x·z≡y·z→x≡y : {T : Set ℓ₁} {A : Set ℓ₁}
-                 ⦃ _ : Ring T ⦄ ⦃ _ : Ring A ⦄
-                 ⦃ _ : Scalable T A ⦄ ⦃ _ : VectorSpace T A ⦄
-                 {x y : T}
-              → (∀ {z : T} → x ⊙ z ≡ y ⊙ z)
-                 ---------------------------------------------
-              → x ≡ y
--- ToDo: Try replacing postulate above w/ definition below.
---       (Perhaps, a proof by contradiction, starting w/ `x ≢ y`?)
--- x·z≡y·z→x≡y x·z≡y·z = {!!}
-
 a⊸§↔a : {T : Set ℓ₁} {A : Set ℓ₁}
          ⦃ _ : Ring T ⦄ ⦃ _ : Ring A ⦄
-         ⦃ _ : Scalable T A ⦄ ⦃ _ : VectorSpace T A ⦄
+         ⦃ _ : Scalable T A ⦄ ⦃ _ : ScalableCont T A ⦄
+         ⦃ _ : VectorSpace T A ⦄ ⦃ _ : LinMap T A ⦄
+      → Σ[ y ∈ T ] f y ≢ 𝟘
          ---------------------------------------------
       → (LinMap T A) ↔ T
-a⊸§↔a =
+a⊸§↔a Σ[y]fy≢𝟘 =
   mk↔ {f = a⊸§→a} {f⁻¹ = a⊸§←a}
       ( (λ {x → begin
                   a⊸§→a (a⊸§←a x)
@@ -345,7 +592,7 @@ a⊸§↔a =
                   a⊸§→a (mkLM (x ⊙_) ⊙-distrib-+ ⊙-comm-·)
                 ≡⟨⟩
                   foldl (λ acc v → acc + (x ⊙ v) · v) 𝟘 basisSet
-                ≡⟨ x·z≡y·z→x≡y orthonormal ⟩
+                ≡⟨ x·z≡y·z→x≡y Σ[y]fy≢𝟘 orthonormal ⟩
                   x
                 ∎})
       , λ {lm → begin
@@ -369,7 +616,7 @@ a⊸§↔a =
 
 ```
 
-### Stashed
+## Stashed
 
 Stashed coding attempts.
 
@@ -385,110 +632,5 @@ Stashed coding attempts.
 --         -------------------------------------
 --       → (LinMap A §) ⇔ A
 -- a⊸§⇔a {A} = mk⇔ a⊸§→a a⊸§←a
-
--- -- f(0) = 0
--- zero-lin : {A B : Set a}
---           ⦃ _ : Additive A ⦄ ⦃ _ : Additive B ⦄
---           ⦃ _ : Scalable A ⦄ ⦃ _ : Scalable B ⦄
---           ⦃ _ : LinMap A B ⦄
-
--- -- Injectivity of linear function
--- inj-lin : {A B : Set a} {x y : A}
---           ⦃ _ : Additive A ⦄ ⦃ _ : Additive B ⦄
---           ⦃ _ : Scalable A ⦄ ⦃ _ : Scalable B ⦄
---           ⦃ _ : LinMap A B ⦄
---        → LinMap.f _ x ≡ LinMap.f _ y
---           ---------------------------
---        → x ≡ y
--- inj-lin {x = x} {y = y} fx≡fy =
---   let f = LinMap.f _
---    in begin
---         x
---       ≡⟨⟩
---         f (x - y)
---       ≡⟨ LinMap.adds _ ⟩
---         f x - f y
---       ≡⟨ sub-≡ fx≡fy ⟩
---         0
---       ≡⟨⟩
---         y
---       ∎
-      
--- cong-app′ : ∀ {A : Set a} {B : Set b} {f : A → B} {x y : A}
---          → f x ≡ f y
---             ---------
---          → x ≡ y
--- cong-app′ fx≡fy = {!contraposition!}
-         
--- x·z≡y·z→x≡y : {A : Set a}
---                ⦃ _ : Additive A ⦄ ⦃ _ : Scalable A ⦄
---                ⦃ _ : VectorSpace A ⦄ ⦃ _ : LinMap A § ⦄
---                {x y : A}
---             → (∀ {z : A} → x · z ≡ y · z)
---                ------------------------------------------------------------
---             → x ≡ y
--- x·z≡y·z→x≡y {x = x} {y = y} g =
---   let f = LinMap.f _
---       z = foldl (λ acc v → acc ⊕ f v ⊛ v) id⊕ basisSet
---       x·z≡y·z = g {z}
---    in cong-app refl {!!}
---    -- in begin
---    --      -- ?
---    --      x·z≡y·z
---    --    -- ≡⟨ ? ⟩
---    --    --   x · z ≡ y · z
---    --    ≡⟨ ? ⟩
---    --    -- ≡⟨ cong (_≡ y · z) comm-· ⟩
---    --      z · x ≡ y · z
---    --    ≡⟨ ? ⟩
---    --    -- ≡⟨ cong (z · x ≡_) comm-· ⟩
---    --      z · x ≡ z · y
---    --    ≡⟨ ? ⟩
---    --    -- ≡⟨ cong (_≡ z · y) (orthonormal) ⟩
---    --      f x ≡ z · y
---    --    ≡⟨ ? ⟩
---    --    -- ≡⟨ cong (f x ≡_) (orthonormal) ⟩
---    --      f x ≡ f y
---    --    ≡⟨ ? ⟩
---    --    -- ≡⟨ cong-app ⟩
---    --      x ≡ y
---    --    ∎
-
--- -- So, how was Agsy able to jump over all of that?
--- -- My usual experience w/ Agsy is that when I ask it to solve anything
--- -- non-trivial by itself it always complains, "Sorry, I don't support
--- -- literals, yet.", which I've never understood.
-
--- a⊸§↔a : {A : Set a}
---          ⦃ _ : Additive A ⦄ ⦃ _ : Scalable A ⦄
---          ⦃ _ : VectorSpace A ⦄ ⦃ _ : LinMap A § ⦄
---          -----------------------------------------
---       → (LinMap A §) ↔ A
--- a⊸§↔a {A} =
---   mk↔ {f = a⊸§→a} {f⁻¹ = a⊸§←a}
---       ( (λ {x → begin
---                   a⊸§→a (a⊸§←a x)
---                 ≡⟨⟩
---                   a⊸§→a (mkLM (x ·_) ·-distrib-⊕ ·-comm-⊛)
---                 ≡⟨⟩
---                   foldl (λ acc v → acc ⊕ (x · v) ⊛ v) id⊕ basisSet
---                 ≡⟨ x·z≡y·z→x≡y (orthonormal {f = (x ·_)}) ⟩
---                   x
---                 ∎})
---       , λ {lm → begin
---                   a⊸§←a (a⊸§→a lm)
---                 ≡⟨⟩
---                   a⊸§←a (foldl (λ acc v → acc ⊕ (LinMap.f lm v) ⊛ v) id⊕ basisSet)
---                 ≡⟨⟩
---                   mkLM ((foldl (λ acc v → acc ⊕ (LinMap.f lm v) ⊛ v) id⊕ basisSet)·_)
---                        ·-distrib-⊕ ·-comm-⊛
---                 ≡⟨ ⊸≡ ( extensionality
---                           ( λ x → orthonormal {f = LinMap.f lm} {x = x} )
---                       )
---                  ⟩
---                   lm
---                 ∎}
---       )
-
 
 ```
