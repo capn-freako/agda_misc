@@ -178,6 +178,9 @@ postulate
 Here, we define the abstract type classes we'll be using in our proofs.
 We use a slight variation on the approach taken in the standard library "bundles", because it yields cleaner, more succinct, abstract code capable of _automatic instance selection_.
 
+**Question:** What is the cost of this?
+There must be some reason why the architects of the standard library chose not to do it this way.
+
 **Note:** We've removed our previously defined custom typeclass: `Additive`, in favor of `Ring` defined in the Agda standard library.
 We've kept `Scalable`, for now, in order to get some incremental progress working and checked in before attempting to use `Module` and friends.
 
@@ -214,6 +217,7 @@ record Scalable (T : Set ℓ₁) (A : Set ℓ₁)
        → 𝟙 · v ≡ v
 open Scalable ⦃ ... ⦄ public
 
+-- continuously scalable
 record ScalableCont (T : Set ℓ₁) (A : Set ℓ₁)
                     ⦃ _ : Ring A ⦄ ⦃ _ : Ring T ⦄ ⦃ _ : Scalable T A ⦄
                     : Set (Level.suc ℓ₁) where
@@ -275,10 +279,6 @@ We take the vector-centric definition offered by Conal in his paper:
 
 > A linear map is one that distributes over _vector_ addition and _scalar_ multiplication.
 
-We require our linear maps to be non-trivial (i.e. - `f ≢ const 𝟘`).
-If we don't do this here then we have to add an argument of the same type to many of the lemmas and proofs below.
-The loss of generality seems rather benign, in this case.
-
 ```agda
 record LinMap (A : Set ℓ₁) (B : Set ℓ₁) {§ : Set ℓ₁}
               ⦃ _ : Ring A ⦄ ⦃ _ : Ring B ⦄ ⦃ _ : Ring § ⦄
@@ -295,8 +295,6 @@ record LinMap (A : Set ℓ₁) (B : Set ℓ₁) {§ : Set ℓ₁}
     scales : ∀ {s : §} {a : A}
              -------------------
           → f (s · a) ≡ s · f a
-    -- nontrivial : Σ[ a ∈ A ] f a ≢ 𝟘
-
 open LinMap ⦃ ... ⦄ public
 
 ```
@@ -330,7 +328,7 @@ f𝟘≡𝟘 : {A : Set ℓ₁} {B : Set ℓ₁} {§ : Set ℓ₁}
        ⦃ ringA : Ring A ⦄ ⦃ ringB : Ring B ⦄ ⦃ ring§ : Ring § ⦄
        ⦃ scalA§ : Scalable A § ⦄ ⦃ scalB§ : Scalable B § ⦄
        ⦃ lmAB : LinMap A B {§} ⦄ {x : A}
-       ------------------------------------------
+       -------
     → f 𝟘 ≡ 𝟘
 f𝟘≡𝟘 {x = x} =
   begin
@@ -399,8 +397,6 @@ zero-unique {§ = §} {x = x} (y , fy≢𝟘) x≢𝟘 =
                 in (s , λ s·fx≡𝟘 → fy≢𝟘 (step-≡ (f y) s·fx≡𝟘 (Eq.sym g)))
    in non-zeroʳ (snd s·fx≢𝟘)
 
--- ToDo: Can I prove this?
--- postulate
 fx≡𝟘→x≡𝟘 : {A : Set ℓ₁} {B : Set ℓ₁} {§ : Set ℓ₁}
             ⦃ _ : Ring A ⦄ ⦃ _ : Ring B ⦄ ⦃ _ : Ring § ⦄
             ⦃ _ : Scalable A § ⦄ ⦃ _ : Scalable B § ⦄
@@ -408,15 +404,14 @@ fx≡𝟘→x≡𝟘 : {A : Set ℓ₁} {B : Set ℓ₁} {§ : Set ℓ₁}
             {x : A}
          → Σ[ y ∈ A ] f y ≢ 𝟘
          → f x ≡ 𝟘
-            -------
+            ------------------
          → x ≡ 𝟘
 fx≡𝟘→x≡𝟘 {x = x} Σ[y]fy≢𝟘 fx≡𝟘 =
-  let x≡𝟘 : ¬ (x ≢ 𝟘)
-      x≡𝟘 = λ x≢𝟘 → zero-unique Σ[y]fy≢𝟘 x≢𝟘 fx≡𝟘
-   in ≡-involutive x≡𝟘
-
+  let ¬x≢𝟘 : ¬ (x ≢ 𝟘)
+      ¬x≢𝟘 = λ x≢𝟘 → zero-unique Σ[y]fy≢𝟘 x≢𝟘 fx≡𝟘
+   in ≡-involutive ¬x≢𝟘
   
--- f (-x) ≡ - (f x)
+-- f is odd (i.e. - f (-x) ≡ - (f x)).
 fx+f-x≡𝟘 : {A : Set ℓ₁} {B : Set ℓ₁} {§ : Set ℓ₁}
            ⦃ _ : Ring A ⦄ ⦃ _ : Ring B ⦄ ⦃ _ : Ring § ⦄
            ⦃ _ : Scalable A § ⦄ ⦃ _ : Scalable B § ⦄
@@ -441,7 +436,7 @@ f-x≡-fx : {A : Set ℓ₁} {B : Set ℓ₁} {§ : Set ℓ₁}
        → f (- x) ≡ - (f x)
 f-x≡-fx {x = x} = uniqueʳ-⁻¹ (f x) (f (- x)) fx+f-x≡𝟘
 
--- A linear function is injective.
+-- A non-trivial linear function is injective.
 inj-lm : {A : Set ℓ₁} {B : Set ℓ₁} {§ : Set ℓ₁}
          ⦃ _ : Ring A ⦄ ⦃ _ : Ring B ⦄ ⦃ _ : Ring § ⦄
          ⦃ _ : Scalable A § ⦄ ⦃ _ : Scalable B § ⦄
@@ -483,6 +478,8 @@ inj-lm {x = x} {y = y} Σ[y]fy≢𝟘 fx≡fy =
 Here, we define what we mean by a _vector space_.
 
 In its most general sense, a "vector space" provides a function that takes some _index_ type and uses it to map from some _container_ type to a single value of the _carrier_ type.
+
+**Note:** I think I've heard Conal hint that there is some redundancy between the _index_ and _container_ types, which can be eliminated.
 
 We add a few extras, useful when doing _linear algebra_:
 
@@ -531,15 +528,16 @@ record VectorSpace
                → a ⊙ b ≡ b ⊙ a
 open VectorSpace ⦃ ... ⦄ public
 
+--Used to be a postulate; now a proof.
 x·z≡y·z→x≡y : {T : Set ℓ₁} {A : Set ℓ₁}
                ⦃ _ : Ring T ⦄ ⦃ _ : Ring A ⦄
                ⦃ _ : Scalable T A ⦄ ⦃ _ : ScalableCont T A ⦄
                ⦃ _ : VectorSpace T A ⦄ ⦃ _ : LinMap T A ⦄
                {x y : T}
-           → Σ[ y ∈ T ] f y ≢ 𝟘
-           →  (∀ {z : T} → x ⊙ z ≡ y ⊙ z)
+            → Σ[ y ∈ T ] f y ≢ 𝟘
+            → (∀ {z : T} → x ⊙ z ≡ y ⊙ z)
                ----------------------------
-           →  x ≡ y
+            → x ≡ y
 x·z≡y·z→x≡y {x = x} {y = y} Σ[y]fy≢𝟘 g =
   let z = foldl (λ acc v → acc + f v · v) 𝟘 basisSet
       x·z≡y·z = g {z}
